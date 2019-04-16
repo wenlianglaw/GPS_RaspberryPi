@@ -1,5 +1,5 @@
 COMPILER=g++
-FILE=1
+FILE=gps_raspberry_pi
 LIB=-lwiringPi -lwiringPiDev -lpthread
 CFLAG=-std=c++17 -Wall
 
