@@ -56,60 +56,10 @@ class GPSParser{
            x.x,N = Speed, knots
            x.x,K = Speed, Km/hr
            */
-
-      } else if( StartWith(gps, "$GPRMC") ){
-        /*
-         * Recommended minimum specific GPS/Transit data
-
-         eg1. $GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62
-         eg2. $GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68
-
-
-         225446       Time of fix 22:54:46 UTC
-         A            Navigation receiver warning A = OK, V = warning
-         4916.45,N    Latitude 49 deg. 16.45 min North
-         12311.12,W   Longitude 123 deg. 11.12 min West
-         000.5        Speed over ground, Knots
-         054.7        Course Made Good, True
-         191194       Date of fix  19 November 1994
-         020.3,E      Magnetic variation 20.3 deg East
-         *68          mandatory checksum
-
-
-         eg3. $GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70
-         1    2    3    4    5     6    7    8      9     10  11 12
-
-
-         1   220516     Time Stamp
-         2   A          validity - A-ok, V-invalid
-         3   5133.82    current Latitude
-         4   N          North/South
-         5   00042.24   current Longitude
-         6   W          East/West
-         7   173.8      Speed in knots
-         8   231.8      True course
-         9   130694     Date Stamp
-         10  004.2      Variation
-         11  W          East/West
-         12  *70        checksum
-
-
-         eg4. $GPRMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,ddmmyy,x.x,a*hh
-         1    = UTC of position fix
-         2    = Data status (V=navigation receiver warning)
-         3    = Latitude of fix
-         4    = N or S
-         5    = Longitude of fix
-         6    = E or W
-         7    = Speed over ground in knots
-         8    = Track made good in degrees True
-         9    = UT date
-         10   = Magnetic variation degrees (Easterly var. subtracts from true course)
-         11   = E or W
-         12   = Checksum
-         */
-
-      } else if( StartWith(gps, "$GPGSA") ){
+      } else if( StartWith(gps, "$GPRMC") ) {
+        Print(INFO, "Parsing:", gps);
+        ParseGPRMC(words);
+      } else if( StartWith(gps, "$GPGSA") ) {
         /*
          * $GPGSA
          GPS DOP and active satellites
@@ -138,6 +88,109 @@ class GPSParser{
       }
     }
   private:
+    void ParseGPRMC(const vector<string>& words){
+      /*
+       * Recommended minimum specific GPS/Transit data
+
+       eg1. $GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62
+       eg2. $GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68
+
+
+       225446       Time of fix 22:54:46 UTC
+       A            Navigation receiver warning A = OK, V = warning
+       4916.45,N    Latitude 49 deg. 16.45 min North
+       12311.12,W   Longitude 123 deg. 11.12 min West
+       000.5        Speed over ground, Knots
+       054.7        Course Made Good, True
+       191194       Date of fix  19 November 1994
+       020.3,E      Magnetic variation 20.3 deg East
+       *68          mandatory checksum
+
+
+       eg3. $GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70
+       1    2    3    4    5     6    7    8      9     10  11 12
+
+
+       1   220516     Time Stamp
+       2   A          validity - A-ok, V-invalid
+       3   5133.82    current Latitude
+       4   N          North/South
+       5   00042.24   current Longitude
+       6   W          East/West
+       7   173.8      Speed in knots
+       8   231.8      True course
+       9   130694     Date Stamp
+       10  004.2      Variation
+       11  W          East/West
+       12  *70        checksum
+
+
+       eg4. $GPRMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,ddmmyy,x.x,a*hh
+       1    = UTC of position fix
+       2    = Data status (V=navigation receiver warning)
+       3    = Latitude of fix
+       4    = N or S
+       5    = Longitude of fix
+       6    = E or W
+       7    = Speed over ground in knots
+       8    = Track made good in degrees True
+       9    = UT date
+       10   = Magnetic variation degrees (Easterly var. subtracts from true course)
+       11   = E or W
+       12   = Checksum
+       */
+
+      int i=1;
+      // Time
+      string gps_time = words[i++];
+      ParseGpsTime(gps_time);
+
+      // Navigation receiver warning 
+      string nav_receiver_warning = words[i++];
+      if( !nav_receiver_warning.empty() ){
+        if(nav_receiver_warning == "V"){
+          Print(INFO, "Nav Receiver Warning.");
+        }
+      }
+
+      // Lat, long
+      string lat = words[i++],
+      ne = words[i++],
+      longi = words[i++],
+      sw = words[i++];
+      ParseLatAndLong(lat, longi, ne, sw);
+
+      // Speed over ground, Knots
+      string str_speed_over_ground = words[i++];
+      if(!str_speed_over_ground.empty()){
+        float speed_over_ground = stof(str_speed_over_ground);
+        Print(INFO, "Current Speed is:", speed_over_ground);
+      }
+
+      // Course Made Good, True
+      string str_cmg = words[i++];
+      if(!str_cmg.empty()){
+        float cmg = stof(str_cmg);
+        Print(INFO, "Course Made Good is:", cmg);
+      }
+
+      // 191194       Date of fix  19 November 1994
+      string date = words[i++];
+      if(!date.empty()){
+        int day = stoi(date.substr(0,2));
+        int month = stoi(date.substr(2,4));
+        int year = stoi(date.substr(4));
+        Print(INFO, "Gps date:", day, " ", month, " ", year + 1900);
+      }
+
+      // 020.3,E      Magnetic variation 20.3 deg East
+      string str_magnetic_variation = words[i++];
+      string mag_ew = to_string(words[i][0]);
+      
+      // *68          mandatory checksum
+      string check_sum = words[i].substr(1);
+    }
+
     void ParseGPGGA(const vector<string>& words){
       /*
          $GPGGA
@@ -202,44 +255,19 @@ class GPSParser{
       int i = 1;
       // i = 1 Time
       string gps_time = words[i++];
-      // i = 2,3  Latitude, longitude
+      ParseGpsTime(gps_time);
+    
+     // Latitude, longitude
       string latitude = words[i++], NE = words[i++];
-      // i = 4,5
       string longitude = words[i++], SW = words[i++];
+      ParseLatAndLong(latitude, longitude, NE, SW);
+
+      // i = 6 fix quailty
       // 0 = INVALID
       // 1 = GPS fix
       // 2 = DGPS fix
-      // i = 6
       string str_fix_quality = words[i++];
-      string str_umber_of_satellites = words[i++];
-      Print(DEBUG, "i==", i);
-      // Horizontal Dilution of Precision (HDOP)
-      string str_hdop = words[i++];
-      string str_altitude = words[i++];
-      Print(DEBUG, "i==", i);
-      // i = 10. Unit
-      string altitute_unit = words[i++];
-      Print(DEBUG, "i==", i);
-      // Height of geoid above WGS85 ellipsoid
-      string str_height = words[i++];
-      string height_unit = words[i++];
-      Print(DEBUG, "i==", i);
-      // Time since last DGPS update
-      // DGPS reference station id and DGPS ref.statio.id  format x.x
-      string dgps_station = words[i++];
-      Print(DEBUG, "i==", i);
-      // i = 14
-      string check_sum = words[i++];
-      Print(DEBUG, "i==", i);
-
-      // time
-      ParseGpsTime(gps_time);
-    
-      // long and lat
-      ParseLatAndLong(latitude, longitude, NE, SW);
-
-      // fix_quailty
-      if( str_fix_quality.size() ){
+      if( !str_fix_quality.empty() ){
         int fix_quality = stoi(str_fix_quality);
         switch(fix_quality){
           case 1: Print(INFO, "GPS fix");
@@ -249,24 +277,45 @@ class GPSParser{
       }
 
       // number of satellites
-      if( str_umber_of_satellites.size()){
+      string str_umber_of_satellites = words[i++];
+      if( !str_umber_of_satellites.empty()){
         int number_of_satellites = stoi(str_umber_of_satellites);
         Print(INFO, "Satellites in use:", number_of_satellites);
       }
 
-      // HDOP
-      // Skip
+      Print(DEBUG, "i==", i);
+      // Horizontal Dilution of Precision (HDOP)
+      string str_hdop = words[i++];
+      Print(DEBUG, "i==", i);
 
-      // Altitude
+      // i = 10. Altitude
+      string str_altitude = words[i++];
+      string altitute_unit = words[i++];
       if( !str_altitude.empty()){
         float altitude = stof(str_altitude);
         Print(INFO, "Altitude: ", altitude," ", altitute_unit);
       }
 
-      // Height
+
+      Print(DEBUG, "i==", i);
+      // Height of geoid above WGS85 ellipsoid
+      string str_height = words[i++];
+      string height_unit = words[i++];
       if(!str_height.empty()){
         float height = stof(str_height);
         Print(INFO, "Height: ", height," ", height_unit);
+      }
+
+      Print(DEBUG, "i==", i);
+      // Time since last DGPS update
+      // DGPS reference station id and DGPS ref.statio.id  format x.x
+      string dgps_station = words[i++];
+      Print(DEBUG, "i==", i);
+
+      // i = 14 Check sum
+      if( i < words.size()-1 ){
+        string check_sum = words[i++];
+        Print(DEBUG, "i==", i);
       }
     }
 
