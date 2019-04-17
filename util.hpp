@@ -13,6 +13,8 @@ using namespace std;
 #define ERROR 3
 
 #define DISABLE_DEBUG_MSG
+#define DISABLE_INFO_MSG
+
 
 bool StartWith(const string& str, const string& word){
   if(str.size() < word.size()) return false;
@@ -47,6 +49,9 @@ void PrintContainer(Level l, const T& container){
 #ifdef DISABLE_DEBUG_MSG
   if(l == DEBUG) return;
 #endif
+#ifdef DISABLE_DEBUG_MSG
+  if(l == INFO) return;
+#endif
   for(auto it = container.begin(); it!=container.end(); it++){
     cout<<*it<<" ";
   }
@@ -57,6 +62,9 @@ template <typename ...T>
 void Print(Level l,  T... args ){
 #ifdef DISABLE_DEBUG_MSG
   if(l == DEBUG) return;
+#endif
+#ifdef DISABLE_DEBUG_MSG
+  if(l == INFO) return;
 #endif
   (cout<<...<<args);
   cout<<endl;

@@ -1,5 +1,4 @@
-#include "util.hpp"
-
+#include "util.hpp" 
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -13,6 +12,9 @@
 #include <time.h>
 #include <mutex>
 
+#define _UNUSED___attribute__((unused))
+#undef DISABLE_INFO_MSG
+//#undef DISABLE_DEBUG_MSG
 
 using namespace std;
 
@@ -22,64 +24,102 @@ std::mutex g_mutex;
 vector<string> g_gps_sentence_pool;
 
 
+class GPSUnit{
+  /* GPGGA */
+  float latitude_ = 0.0f;
+  string NS_ = "N";
+  float longitutde_ = 0.0f;
+  string EW_ = "E";
+  // 225446 Time of fix 22:54:46 UTC
+  string time_ = "145902";
+  // GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
+  int gps_quality_indicator_ = 0;
+  // Number of satellites in use [not those in view]
+  int num_of_satellites_ = 0;
+  // Antenna altitude above/below mean sea level (geoid)
+  float antena_altitude_sea_ = 0.0f;
+  // Meters  (Antenna height unit)
+  string antenna_height_unit_ = "M";
+  // Geoidal separation (Diff. between WGS-84 earth ellipsoid and
+  // mean sea level.  -=geoid is below WGS-84 ellipsoid)
+  float geoidal_separation_ = 0.0f;
+  // Meters  (Units of geoidal separation)
+  string geoidal_separation_unit_ = "M";
+  // Age in seconds since last update from diff. reference station
+  float seconds_since_last_diff_ = 0.0f;
+  // Diff. reference station ID#
+  int diff_ref_station_id_ = -1;
+
+
+  /* GPRMC & GPVTG */
+  // A Navigation receiver warning A = OK, V = warning
+  string nav_receiver_warning_ = "A";
+  // 191194       Date of fix  19 November 1994
+  string date_ = "010119";
+  // 4916.45,N    Latitude 49 deg. 16.45 min North
+  float latitude_degree_ = 0.0f;
+  string latitude_deg_NS_ = "N";
+  // 12311.12,W   Longitude 123 deg. 11.12 min West
+  float longitude_degree_ = 0.0f;
+  string longitude_deg_SW_ = "S";
+  // 000.5        Speed over ground.  knots and km/h
+  float speed_over_ground_knots_ = 0.0f;
+  float speed_over_ground_kmh_ = 0.0f;
+  // 054.7        Course Made Good, True
+  float course_made_good_ = 0.0f;
+  // 020.3,E      Magnetic variation 20.3 deg East
+  float magnetic_variation_ = 0.0f;
+  string magnetic_variation_EW_ = "E";
+
+  /* GPVTG */
+  // 054.7,T Track made good
+  float track_made_good_ = 0.0f;
+
+  /* GPGSA */
+  /* 
+   *   1    = Mode:
+   *     M=Manual, forced to operate in 2D or 3D
+   *     A=Automatic, 3D/2D
+   */
+  string manual_auto_mode_ = 0;
+
+  /*
+   * 2    = Mode:
+   *   1=Fix not available
+   *   2=2D
+   *   3=3D
+   */
+  int mode_2d_3d_ = 1;
+
+  // TDOP (clock offset)
+  float pdop_ = 0.0f;
+  // HDOP (latitude/longitude)
+  float hdop_ = 0.0f;
+  // VDOP (altitude)
+  float vdop_ = 0.0f;
+};
+
 class GPSParser{
   public:
+    // TDOP (clock offset)
+    float pdop_ = 1.0f;
+    // HDOP (latitude/longitude)
+    float hdop_ = 1.0f;
+    // VDOP (altitude)
+    float vdop_ = 1.0f;
+
     // http://aprs.gids.nl/nmea
     void Parse(const string& gps){
+      Print(ERROR, gps);
       auto words = StrSplit(gps, ",");
       if( StartWith(gps, "$GPVTG") ){
-        /* Track Made Good and Ground Spped.
-           eg1. $GPVTG,360.0,T,348.7,M,000.0,N,000.0,K*43
-           eg2. $GPVTG,054.7,T,034.4,M,005.5,N,010.2,K
-
-           054.7,T      True track made good
-           034.4,M      Magnetic track made good
-           005.5,N      Ground speed, knots
-           010.2,K      Ground speed, Kilometers per hour
-
-
-           eg3. $GPVTG,t,T,,,s.ss,N,s.ss,K*hh
-           1    = Track made good
-           2    = Fixed text 'T' indicates that track made good is relative to true north
-           3    = not used
-           4    = not used
-           5    = Speed over ground in knots
-           6    = Fixed text 'N' indicates that speed over ground in in knots
-           7    = Speed over ground in kilometers/hour
-           8    = Fixed text 'K' indicates that speed over ground is in kilometers/hour
-           9    = Checksum
-           The actual track made good and speed relative to the ground.
-
-           $--VTG,x.x,T,x.x,M,x.x,N,x.x,K
-           x.x,T = Track, degrees True
-           x.x,M = Track, degrees Magnetic
-           x.x,N = Speed, knots
-           x.x,K = Speed, Km/hr
-           */
+        Print(INFO, "Parsing:", gps);
+        ParseGPVTG(words);
       } else if( StartWith(gps, "$GPRMC") ) {
         Print(INFO, "Parsing:", gps);
         ParseGPRMC(words);
       } else if( StartWith(gps, "$GPGSA") ) {
-        /*
-         * $GPGSA
-         GPS DOP and active satellites
-
-         eg1. $GPGSA,A,3,,,,,,16,18,,22,24,,,3.6,2.1,2.2*3C
-         eg2. $GPGSA,A,3,19,28,14,18,27,22,31,39,,,,,1.7,1.0,1.3*35
-
-
-         1    = Mode:
-         M=Manual, forced to operate in 2D or 3D
-         A=Automatic, 3D/2D
-         2    = Mode:
-         1=Fix not available
-         2=2D
-         3=3D
-         3-14 = IDs of SVs used in position fix (null for unused fields)
-         15   = PDOP
-         16   = HDOP
-         17   = VDOP
-         */
+        Print(INFO, "Parsing:", gps);
       } else if( StartWith(gps, "$GPGGA") ){
         Print(INFO, "Parsing:", gps);
         ParseGPGGA(words);
@@ -88,6 +128,112 @@ class GPSParser{
       }
     }
   private:
+    void ParseGPGSA(const vector<string>& words){
+      /*
+       * $GPGSA
+       * GPS DOP and active satellites
+       *
+       *   eg1. $GPGSA,A,3,,,,,,16,18,,22,24,,,3.6,2.1,2.2*3C
+       *   eg2. $GPGSA,A,3,19,28,14,18,27,22,31,39,,,,,1.7,1.0,1.3*35
+       *
+       *   1    = Mode:
+       *     M=Manual, forced to operate in 2D or 3D
+       *     A=Automatic, 3D/2D
+       *   2    = Mode:
+       *     1=Fix not available
+       *     2=2D
+       *     3=3D
+       *   3-14 = IDs of SVs used in position fix (null for unused fields)
+       *   15   = PDOP
+       *   16   = HDOP
+       *   17   = VDOP
+       */
+       int i=1;
+       const string& manual_auto_mode [[maybe_unused]] = words[i++];
+
+       const string& mode_2d_3d = words[i++];
+
+       i = 15;
+       const string& str_pdop = words[i++];
+       if(!str_pdop.empty()){
+         pdop_ = stof(str_pdop);
+       }
+
+       const string& str_hdop = words[i++];
+       if(!str_hdop.empty()){
+         hdop_ = stof(str_hdop);
+       }
+
+       const string& str_vdop = words[i++];
+       if(!str_vdop.empty()){
+         vdop_ = stof(str_vdop);
+       }
+    }
+
+    void ParseGPVTG(const vector<string>& words){
+      /*
+       * Track Made Good and Ground Spped.
+       * eg1. $GPVTG,360.0,T,348.7,M,000.0,N,000.0,K*43
+       * eg2. $GPVTG,054.7,T,034.4,M,005.5,N,010.2,K
+       *
+       *   054.7,T      True track made good
+       *   034.4,M      Magnetic track made good
+       *   005.5,N      Ground speed, knots
+       *   010.2,K      Ground speed, Kilometers per hour
+       *
+       *
+       *   eg3. $GPVTG,t,T,,,s.ss,N,s.ss,K*hh
+       *   1    = Track made good
+       *   2    = Fixed text 'T' indicates that track made good is relative to true north
+       *   3    = not used
+       *   4    = not used
+       *   5    = Speed over ground in knots
+       *   6    = Fixed text 'N' indicates that speed over ground in in knots
+       *   7    = Speed over ground in kilometers/hour
+       *   8    = Fixed text 'K' indicates that speed over ground is in kilometers/hour
+       *   9    = Checksum
+       *   The actual track made good and speed relative to the ground.
+       *
+       *   $--VTG,x.x,T,x.x,M,x.x,N,x.x,K
+       *     x.x,T = Track, degrees True
+       *     x.x,M = Track, degrees Magnetic
+       *     x.x,N = Speed, knots
+       *     x.x,K = Speed, Km/hr
+       */
+      int i=1;
+       // 1    = Track made good
+      const string& str_track_made_good = words[i++];
+      if(!str_track_made_good.empty()){
+        float track_made_good = stof(str_track_made_good);
+      }
+      // 2   = Fixed text 'T' indicates that track made good is relative to true north
+      const string& track_made_good_T = words[i++];
+
+      // 3    = not used
+      i++;
+      // 4    = not used
+      i++;
+
+       // 5    = Speed over ground in knots
+      const string& str_speed_over_ground_kt = words[i++];
+      if(!str_speed_over_ground_kt.empty()){
+        float speed_over_ground_kt = stof(str_speed_over_ground_kt);
+      }
+      // 6    = Fixed text 'N' indicates that speed over ground in in knots
+      const string& speed_over_ground_kt_unit = words[i++];
+
+      // 7    = Speed over ground in kilometers/hour
+      const string& str_speed_over_ground_km = words[i++];
+      if(!str_speed_over_ground_km.empty()){
+        float speed_over_ground_km = stof(str_speed_over_ground_km);
+      }
+      // 8    = Fixed text 'K' indicates that speed over ground is in kilometers/hour
+      const string& speed_over_ground_km_unit = words[i++];
+
+      // 9    = Checksum
+      const string& checksum = words[i++];
+    }
+
     void ParseGPRMC(const vector<string>& words){
       /*
        * Recommended minimum specific GPS/Transit data
@@ -186,11 +332,11 @@ class GPSParser{
       // 020.3,E      Magnetic variation 20.3 deg East
       string str_magnetic_variation = words[i++];
       string mag_ew = words[i++];
-      
+
       // *68          mandatory checksum
       string check_sum = words[i];
       if( check_sum[0] == 'E' || check_sum[0] == 'W' )
-          mag_ew = check_sum[0];
+        mag_ew = check_sum[0];
     }
 
     void ParseGPGGA(const vector<string>& words){
@@ -258,8 +404,8 @@ class GPSParser{
       // i = 1 Time
       string gps_time = words[i++];
       ParseGpsTime(gps_time);
-    
-     // Latitude, longitude
+
+      // Latitude, longitude
       string latitude = words[i++], NE = words[i++];
       string longitude = words[i++], SW = words[i++];
 
@@ -333,17 +479,14 @@ class GPSParser{
 
       auto ca_time = parsed_tm;
       const int local_time_diff = -7;
-      
+
       ca_time.tm_hour = (ca_time.tm_hour + 24 + local_time_diff) % 24;
       Print(INFO, "UTC time is ", AscGpsTime(&parsed_tm));
       Print(INFO, "CA time is ", AscGpsTime(&ca_time));
     }
 
     void ParseLatAndLong(const string& lat, const string& longi,
-                        const string& NE, const string& SW,
-                        float fix = 1.6666f
-                        /* I don't know how this number come from but it is 1.666f
-                           calculated from the real position */){
+        const string& NE, const string& SW){
       string latitude = lat, longitude = longi;
       if( longitude.size() && latitude.size()){
         string google_map_url = "www.google.com/maps/place/";
@@ -351,14 +494,14 @@ class GPSParser{
         latitude.insert(dot_pos-2,".");
         latitude.erase(dot_pos+1,1);
         auto words = StrSplit(latitude, ".");
-        words[1] = to_string((int)(stoi(words[1])*fix));
+        words[1] = to_string((int)(stoi(words[1])*pdop_));
         latitude = words[0] + "." + words[1];
 
         dot_pos = longitude.find('.');
         longitude.insert(dot_pos-2,".");
         longitude.erase(dot_pos+1,1);
         words = StrSplit(longitude, ".");
-        words[1] = to_string((int)(stoi(words[1])*fix));
+        words[1] = to_string((int)(stoi(words[1])*pdop_));
         longitude = words[0] + "." + words[1];
 
         google_map_url += latitude + NE + "+" + longitude + SW;
