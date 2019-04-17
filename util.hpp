@@ -3,6 +3,8 @@
 #include <cassert>
 #include <iostream>
 #include <ctime>
+#include <string_view>
+#include <charconv>
 
 using namespace std;
 
@@ -14,7 +16,7 @@ using namespace std;
 
 #define DISABLE_DEBUG_MSG
 
-bool StartWith(const string& str, const string& word){
+bool StartWith(string_view str, string_view word){
   if(str.size() < word.size()) return false;
   bool same = true;
   unsigned int i = 0;
@@ -24,8 +26,8 @@ bool StartWith(const string& str, const string& word){
 }
 
 
-vector<string> StrSplit( const string& str, const string& delim ){
-  vector<string> ret;
+vector<string_view> StrSplit( string_view str, const string& delim ){
+  vector<string_view> ret;
   size_t last = 0, next = 0;
 
   while( (next = str.find(delim,last)) != string::npos ){
@@ -41,6 +43,10 @@ vector<string> StrSplit( const string& str, const string& delim ){
   return ret;
 }
 
+template <typename T>
+void ParseNumber(string_view str, T* i){
+  return from_chars(str.begin(), str.end(), *i);
+}
 
 template <typename T>
 void PrintContainer(Level l, const T& container){
@@ -62,15 +68,6 @@ void Print(Level l,  T... args ){
   cout<<endl;
 }
 
-int ParseNumberi(const string& str){
-  return std::stoi(str);
-}
-
-float ParseNumberf(const string& str){
-  if(str == "") return 0.0f;
-  return std::stof(str);
-}
-
 string AscGpsTime( std::tm* tm ){
   char ch[32];
   std::sprintf(ch, "%d:%d:%d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
@@ -88,27 +85,27 @@ string AscGpsTime( std::tm* tm ){
 TEST(TEST_STRSPLIT){
   string a = "a,b,c";
   auto b = StrSplit(a, ",");
-  vector<string> eq_v = {"a","b","c"};
+  vector<string_view> eq_v = {"a","b","c"};
   assert(b == eq_v);
 }
 
 TEST(TEST_STRSPLIT2){
   string a = "a123";
   auto b = StrSplit(a, ".");
-  assert( b == vector<string>{"a123"} );
+  assert( b == vector<string_view>{"a123"} );
 }
 
 
 TEST(TEST_STRSPLIT3){
   string a = "";
   auto b = StrSplit(a," ");
-  assert( b == vector<string>{""});
+  assert( b == vector<string_view>{""});
 }
 
 TEST(TEST_STRSPLIT4){
   string a = ",,,";
   auto b = StrSplit(a,",");
-  auto cmp = vector<string>{"","","",""};
+  auto cmp = vector<string_view>{"","","",""};
   assert( b == cmp );
 }
 
