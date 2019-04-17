@@ -151,7 +151,7 @@ class GPSParser{
        int i=1;
        const string& manual_auto_mode _UNUSED_ = words[i++];
 
-       const string& mode_2d_3d = words[i++];
+       const string& mode_2d_3d _UNUSED_ = words[i++];
 
        i = 15;
        const string& str_pdop = words[i++];
@@ -207,7 +207,7 @@ class GPSParser{
         float track_made_good = stof(str_track_made_good);
       }
       // 2   = Fixed text 'T' indicates that track made good is relative to true north
-      const string& track_made_good_T = words[i++];
+      const string& track_made_good_T _UNUSED_ = words[i++];
 
       // 3    = not used
       i++;
@@ -220,7 +220,7 @@ class GPSParser{
         float speed_over_ground_kt = stof(str_speed_over_ground_kt);
       }
       // 6    = Fixed text 'N' indicates that speed over ground in in knots
-      const string& speed_over_ground_kt_unit = words[i++];
+      const string& speed_over_ground_kt_unit _UNUSED_ = words[i++];
 
       // 7    = Speed over ground in kilometers/hour
       const string& str_speed_over_ground_km = words[i++];
@@ -231,7 +231,7 @@ class GPSParser{
       const string& speed_over_ground_km_unit = words[i++];
 
       // 9    = Checksum
-      const string& checksum = words[i++];
+      const string& checksum _UNUSED_ = words[i++];
     }
 
     void ParseGPRMC(const vector<string>& words){
@@ -465,7 +465,7 @@ class GPSParser{
 
       // i = 14 Check sum
       if( i < words.size()-1 ){
-        string check_sum = words[i++];
+        const string& check_sum _UNUSED_ = words[i++];
         Print(DEBUG, "i==", i);
       }
     }
