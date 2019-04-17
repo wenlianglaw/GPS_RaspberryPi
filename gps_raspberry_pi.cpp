@@ -164,31 +164,33 @@ class GPSParser{
       string str_speed_over_ground = words[i++];
       if(!str_speed_over_ground.empty()){
         float speed_over_ground = stof(str_speed_over_ground);
-        Print(INFO, "Current Speed is:", speed_over_ground);
+        Print(INFO, "Current Speed is:", speed_over_ground, "knots");
       }
 
       // Course Made Good, True
       string str_cmg = words[i++];
       if(!str_cmg.empty()){
         float cmg = stof(str_cmg);
-        Print(INFO, "Course Made Good is:", cmg);
+        Print(INFO, "Course Made Good is:", cmg, "degree");
       }
 
       // 191194       Date of fix  19 November 1994
       string date = words[i++];
       if(!date.empty()){
         int day = stoi(date.substr(0,2));
-        int month = stoi(date.substr(2,4));
+        int month = stoi(date.substr(2,2));
         int year = stoi(date.substr(4));
-        Print(INFO, "Gps date:", day, " ", month, " ", year + 1900);
+        Print(INFO, "Gps date:", day, " ", month, " ", year + 2000);
       }
 
       // 020.3,E      Magnetic variation 20.3 deg East
       string str_magnetic_variation = words[i++];
-      string mag_ew = to_string(words[i][0]);
+      string mag_ew = words[i++];
       
       // *68          mandatory checksum
-      string check_sum = words[i].substr(1);
+      string check_sum = words[i];
+      if( check_sum[0] == 'E' || check_sum[0] == 'W' )
+          mag_ew = check_sum[0];
     }
 
     void ParseGPGGA(const vector<string>& words){
@@ -260,7 +262,6 @@ class GPSParser{
      // Latitude, longitude
       string latitude = words[i++], NE = words[i++];
       string longitude = words[i++], SW = words[i++];
-      ParseLatAndLong(latitude, longitude, NE, SW);
 
       // i = 6 fix quailty
       // 0 = INVALID
@@ -270,9 +271,9 @@ class GPSParser{
       if( !str_fix_quality.empty() ){
         int fix_quality = stoi(str_fix_quality);
         switch(fix_quality){
-          case 1: Print(INFO, "GPS fix");
-          case 2: Print(INFO, "DGPS fix");
-          default:Print(INFO, "Invalid fix quality");
+          case 1: Print(INFO, "GPS fix");break;
+          case 2: Print(INFO, "DGPS fix");break;
+          default:Print(INFO, "Invalid fix quality");break;
         }
       }
 
@@ -286,7 +287,11 @@ class GPSParser{
       Print(DEBUG, "i==", i);
       // Horizontal Dilution of Precision (HDOP)
       string str_hdop = words[i++];
+      Print(INFO, "HDOP:", str_hdop);
+      float hdop = 1.0f;
+      if(!str_hdop.empty()) hdop = stof(str_hdop);
       Print(DEBUG, "i==", i);
+      ParseLatAndLong(latitude, longitude, NE, SW); 
 
       // i = 10. Altitude
       string str_altitude = words[i++];
@@ -327,23 +332,34 @@ class GPSParser{
       strptime(gps_time.c_str(), "%H:%M:%S", &parsed_tm);
 
       auto ca_time = parsed_tm;
-      ca_time.tm_hour = (ca_time.tm_hour - 7)%24;
+      const int local_time_diff = -7;
+      
+      ca_time.tm_hour = (ca_time.tm_hour + 24 + local_time_diff) % 24;
       Print(INFO, "UTC time is ", AscGpsTime(&parsed_tm));
       Print(INFO, "CA time is ", AscGpsTime(&ca_time));
     }
 
     void ParseLatAndLong(const string& lat, const string& longi,
-                        const string& NE, const string& SW){
+                        const string& NE, const string& SW,
+                        float fix = 1.6666f
+                        /* I don't know how this number come from but it is 1.666f
+                           calculated from the real position */){
       string latitude = lat, longitude = longi;
       if( longitude.size() && latitude.size()){
         string google_map_url = "www.google.com/maps/place/";
         auto dot_pos = latitude.find('.');
         latitude.insert(dot_pos-2,".");
         latitude.erase(dot_pos+1,1);
+        auto words = StrSplit(latitude, ".");
+        words[1] = to_string((int)(stoi(words[1])*fix));
+        latitude = words[0] + "." + words[1];
 
         dot_pos = longitude.find('.');
         longitude.insert(dot_pos-2,".");
         longitude.erase(dot_pos+1,1);
+        words = StrSplit(longitude, ".");
+        words[1] = to_string((int)(stoi(words[1])*fix));
+        longitude = words[0] + "." + words[1];
 
         google_map_url += latitude + NE + "+" + longitude + SW;
         Print(INFO, google_map_url);
