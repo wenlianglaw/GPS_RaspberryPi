@@ -11,8 +11,8 @@ C++ compile -std=c++1z / -std=c++17
 # Setting up
 Enable uart on Raspberry Pi.  
 Connect GPS module to Raspberry Pi using UART-USB cabel.  
-The port is then /dev/USB0.  
-Using wiringpi library to open /dev/USB0, setting the baudrate to 9600 and you can receive the GPS messages now.
+The port is then /dev/ttyUSB0.  
+Using wiringpi library to open /dev/ttyUSB0, setting the baudrate to 9600 and you can receive the GPS messages now.
 
 # Design
 Using a global GPS message pool.  
