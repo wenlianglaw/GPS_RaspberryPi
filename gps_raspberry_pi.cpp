@@ -12,7 +12,7 @@
 #include <time.h>
 #include <mutex>
 
-#define _UNUSED___attribute__((unused))
+#define _UNUSED_ __attribute__((unused))
 #undef DISABLE_INFO_MSG
 //#undef DISABLE_DEBUG_MSG
 
@@ -149,7 +149,7 @@ class GPSParser{
        *   17   = VDOP
        */
        int i=1;
-       const string& manual_auto_mode [[maybe_unused]] = words[i++];
+       const string& manual_auto_mode _UNUSED_ = words[i++];
 
        const string& mode_2d_3d = words[i++];
 
