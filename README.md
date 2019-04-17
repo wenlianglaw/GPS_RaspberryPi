@@ -1,5 +1,5 @@
 # GPS_RaspberryPi
-This is an experimental project, made just for fun and learning purpose.  But GPS module works pretty well!
+This is an experimental project, made just for fun and learning purpose.  The GPS module works pretty well!
 
 Hardwares:
   * Adafruit Ultimate GPS HAT for Raspberry Pi
