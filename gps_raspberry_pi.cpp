@@ -12,7 +12,6 @@
 #include <ctime>
 #include <time.h>
 #include <mutex>
-#include <string_view>
 
 
 using namespace std;
@@ -20,12 +19,13 @@ using namespace std;
 
 std::mutex g_mutex;
 
-vector<string_view> g_gps_sentence_pool;
+vector<string> g_gps_sentence_pool;
+
 
 class GPSParser{
   public:
     // http://aprs.gids.nl/nmea
-    void Parse(string_view gps){
+    void Parse(const string& gps){
       auto words = StrSplit(gps, ",");
       if( StartWith(gps, "$GPVTG") ){
         /* Track Made Good and Ground Spped.
@@ -60,8 +60,26 @@ class GPSParser{
         Print(INFO, "Parsing:", gps);
         ParseGPRMC(words);
       } else if( StartWith(gps, "$GPGSA") ) {
-        Print(INFO, "Parsing:", gps);
-        ParseGPGSA(words);
+        /*
+         * $GPGSA
+         GPS DOP and active satellites
+
+         eg1. $GPGSA,A,3,,,,,,16,18,,22,24,,,3.6,2.1,2.2*3C
+         eg2. $GPGSA,A,3,19,28,14,18,27,22,31,39,,,,,1.7,1.0,1.3*35
+
+
+         1    = Mode:
+         M=Manual, forced to operate in 2D or 3D
+         A=Automatic, 3D/2D
+         2    = Mode:
+         1=Fix not available
+         2=2D
+         3=3D
+         3-14 = IDs of SVs used in position fix (null for unused fields)
+         15   = PDOP
+         16   = HDOP
+         17   = VDOP
+         */
       } else if( StartWith(gps, "$GPGGA") ){
         Print(INFO, "Parsing:", gps);
         ParseGPGGA(words);
@@ -70,36 +88,7 @@ class GPSParser{
       }
     }
   private:
-    void ParseGPGSA(const vector<string_view>& words){
-      /*
-       * $GPGSA
-       GPS DOP and active satellites
-
-       eg1. $GPGSA,A,3,,,,,,16,18,,22,24,,,3.6,2.1,2.2*3C
-       eg2. $GPGSA,A,3,19,28,14,18,27,22,31,39,,,,,1.7,1.0,1.3*35
-
-
-       1    = Mode:
-       M=Manual, forced to operate in 2D or 3D
-       A=Automatic, 3D/2D
-       2    = Mode:
-       1=Fix not available
-       2=2D
-       3=3D
-       3-14 = IDs of SVs used in position fix (null for unused fields)
-       15   = PDOP
-       16   = HDOP
-       17   = VDOP
-       */
-      //TODO
-      int i=1;
-      string_view mode = words[i++];
-      string_view dim_2_3 = words[i++];
-      
-      
-    }
-
-    void ParseGPRMC(const vector<string_view>& words){
+    void ParseGPRMC(const vector<string>& words){
       /*
        * Recommended minimum specific GPS/Transit data
 
@@ -153,11 +142,11 @@ class GPSParser{
 
       int i=1;
       // Time
-      string_view gps_time = words[i++];
+      string gps_time = words[i++];
       ParseGpsTime(gps_time);
 
       // Navigation receiver warning 
-      string_view nav_receiver_warning = words[i++];
+      string nav_receiver_warning = words[i++];
       if( !nav_receiver_warning.empty() ){
         if(nav_receiver_warning == "V"){
           Print(INFO, "Nav Receiver Warning.");
@@ -165,49 +154,44 @@ class GPSParser{
       }
 
       // Lat, long
-      string_view lat = words[i++],
+      string lat = words[i++],
       ne = words[i++],
       longi = words[i++],
       sw = words[i++];
       ParseLatAndLong(lat, longi, ne, sw);
 
       // Speed over ground, Knots
-      string_view str_speed_over_ground = words[i++];
+      string str_speed_over_ground = words[i++];
       if(!str_speed_over_ground.empty()){
-        float speed_over_ground;
-        ParseNumber(str_speed_over_ground, &speed_over_ground);
+        float speed_over_ground = stof(str_speed_over_ground);
         Print(INFO, "Current Speed is:", speed_over_ground);
       }
 
       // Course Made Good, True
-      string_view str_cmg = words[i++];
+      string str_cmg = words[i++];
       if(!str_cmg.empty()){
-        float cmg;
-        ParseNumber(str_cmg, &cmg);
+        float cmg = stof(str_cmg);
         Print(INFO, "Course Made Good is:", cmg);
       }
 
       // 191194       Date of fix  19 November 1994
-      string_view date = words[i++];
+      string date = words[i++];
       if(!date.empty()){
-        int day;
-        ParseNumber(date.substr(0,2), &day);
-        int month;
-        ParseNumber(date.substr(2,4), &month);
-        int year;
-        ParseNumber(date.substr(4), &year);
+        int day = stoi(date.substr(0,2));
+        int month = stoi(date.substr(2,4));
+        int year = stoi(date.substr(4));
         Print(INFO, "Gps date:", day, " ", month, " ", year + 1900);
       }
 
       // 020.3,E      Magnetic variation 20.3 deg East
-      string_view str_magnetic_variation = words[i++];
-      string_view mag_ew = to_string(words[i][0]);
+      string str_magnetic_variation = words[i++];
+      string mag_ew = to_string(words[i][0]);
       
       // *68          mandatory checksum
-      string_view check_sum = words[i].substr(1);
+      string check_sum = words[i].substr(1);
     }
 
-    void ParseGPGGA(const vector<string_view>& words){
+    void ParseGPGGA(const vector<string>& words){
       /*
          $GPGGA
          Global Positioning System Fix Data
@@ -270,22 +254,21 @@ class GPSParser{
       Print(DEBUG, "words.size=", words.size());
       int i = 1;
       // i = 1 Time
-      string_view gps_time = words[i++];
+      string gps_time = words[i++];
       ParseGpsTime(gps_time);
     
      // Latitude, longitude
-      string_view latitude = words[i++], NE = words[i++];
-      string_view longitude = words[i++], SW = words[i++];
+      string latitude = words[i++], NE = words[i++];
+      string longitude = words[i++], SW = words[i++];
       ParseLatAndLong(latitude, longitude, NE, SW);
 
       // i = 6 fix quailty
       // 0 = INVALID
       // 1 = GPS fix
       // 2 = DGPS fix
-      string_view str_fix_quality = string(words[i++]);
+      string str_fix_quality = words[i++];
       if( !str_fix_quality.empty() ){
-        int fix_quality;
-        ParseNumber(str_fix_quality, &fix_quality);
+        int fix_quality = stoi(str_fix_quality);
         switch(fix_quality){
           case 1: Print(INFO, "GPS fix");
           case 2: Print(INFO, "DGPS fix");
@@ -294,53 +277,50 @@ class GPSParser{
       }
 
       // number of satellites
-      string_view str_umber_of_satellites = words[i++];
+      string str_umber_of_satellites = words[i++];
       if( !str_umber_of_satellites.empty()){
-        int number_of_satellites;
-        ParseNumber(str_umber_of_satellites, &number_of_satellites);
+        int number_of_satellites = stoi(str_umber_of_satellites);
         Print(INFO, "Satellites in use:", number_of_satellites);
       }
 
       Print(DEBUG, "i==", i);
       // Horizontal Dilution of Precision (HDOP)
-      string_view str_hdop = words[i++];
+      string str_hdop = words[i++];
       Print(DEBUG, "i==", i);
 
       // i = 10. Altitude
-      string_view str_altitude = words[i++];
-      string_view altitute_unit = words[i++];
+      string str_altitude = words[i++];
+      string altitute_unit = words[i++];
       if( !str_altitude.empty()){
-        float altitude;
-        ParseNumber(str_altitude, &altitude);
+        float altitude = stof(str_altitude);
         Print(INFO, "Altitude: ", altitude," ", altitute_unit);
       }
 
 
       Print(DEBUG, "i==", i);
       // Height of geoid above WGS85 ellipsoid
-      string_view str_height = words[i++];
-      string_view height_unit = words[i++];
+      string str_height = words[i++];
+      string height_unit = words[i++];
       if(!str_height.empty()){
-        float height;
-        ParseNumber(str_height, &height);
+        float height = stof(str_height);
         Print(INFO, "Height: ", height," ", height_unit);
       }
 
       Print(DEBUG, "i==", i);
       // Time since last DGPS update
       // DGPS reference station id and DGPS ref.statio.id  format x.x
-      string_view dgps_station = words[i++];
+      string dgps_station = words[i++];
       Print(DEBUG, "i==", i);
 
       // i = 14 Check sum
       if( i < words.size()-1 ){
-        string_view check_sum = words[i++];
+        string check_sum = words[i++];
         Print(DEBUG, "i==", i);
       }
     }
 
-    void ParseGpsTime(string_view time){
-      string gps_time = string(time);
+    void ParseGpsTime(const string& time){
+      string gps_time = time;
       struct tm parsed_tm;
       gps_time.insert(2,":");
       gps_time.insert(5,":");
@@ -352,9 +332,9 @@ class GPSParser{
       Print(INFO, "CA time is ", AscGpsTime(&ca_time));
     }
 
-    void ParseLatAndLong(string_view lat, string_view longi,
-                        string_view NE, string_view SW){
-      string latitude = string(lat), longitude = string(longi);
+    void ParseLatAndLong(const string& lat, const string& longi,
+                        const string& NE, const string& SW){
+      string latitude = lat, longitude = longi;
       if( longitude.size() && latitude.size()){
         string google_map_url = "www.google.com/maps/place/";
         auto dot_pos = latitude.find('.');
@@ -365,7 +345,7 @@ class GPSParser{
         longitude.insert(dot_pos-2,".");
         longitude.erase(dot_pos+1,1);
 
-        google_map_url.append(latitude).append(NE).append("+").append(longitude).append(SW);
+        google_map_url += latitude + NE + "+" + longitude + SW;
         Print(INFO, google_map_url);
       }
     }
@@ -379,7 +359,7 @@ void ParseGPS_Thread( GPSParser* gps){
     g_mutex.unlock();
 
     while( gps_sentence_pool.size() ){
-      string_view gps_sentence = gps_sentence_pool.back();
+      string gps_sentence = gps_sentence_pool.back();
       gps_sentence_pool.pop_back();
       try{
         gps->Parse(gps_sentence);
