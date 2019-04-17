@@ -16,8 +16,8 @@ Using wiringpi library to open /dev/USB0, setting the baudrate to 9600 and you c
 
 # Design
 Using a global GPS message pool.  
-2 threads.  First thread receives the GPS messages and insert it to the global GPS message pool.  Second thread parse the
-message pool every second.
+2 threads.  The first thread receives the GPS message and insert it to the global GPS message pool.  The second thread parses
+the message pool every second.
 
 ## PDOP, HDOP and VDOP
 
