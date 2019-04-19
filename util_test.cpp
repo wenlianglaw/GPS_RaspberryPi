@@ -48,6 +48,8 @@ void TestUtil(){
   RUN_TEST(TEST_STRSPLIT4);
   RUN_TEST(TEST_STARTWITH_EQUAL);
   RUN_TEST(TEST_STARTWITH_NOTEQUAL);
+
+  std::cout<<"All Util tests passed!"<<std::endl;
 }
 
 int main(){
