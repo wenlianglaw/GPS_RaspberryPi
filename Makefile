@@ -4,7 +4,7 @@ OUTPUT=gps_raspberry_pi
 LIB=-lwiringPi -lwiringPiDev -lpthread
 CFLAG=-std=c++17 -Wall
 
-all:	test compile
+all:	compile
 
 compile:
 	$(CC) $(FILE).cpp -o $(OUTPUT) $(CFLAG) $(LIB)
