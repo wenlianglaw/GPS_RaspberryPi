@@ -1,7 +1,7 @@
 CC=g++
 FILE=gps_raspberry_pi_main
 OUTPUT=gps_raspberry_pi
-LIBS= -lpthread#-lwiringPi -lwiringPiDev
+LIBS= -lpthread -lwiringPi -lwiringPiDev
 CFLAGS=-std=c++17 -Wall
 
 SRC_FILES= gps_parser.cpp \
