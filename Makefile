@@ -1,12 +1,13 @@
 CC=g++
-FILE=gps_raspberry_pi
+FILE=gps_raspberry_pi_main
+OUTPUT=gps_raspberry_pi
 LIB=-lwiringPi -lwiringPiDev -lpthread
 CFLAG=-std=c++17 -Wall
 
 all:	test compile
 
 compile:
-	$(CC) $(FILE).cpp -o $(FILE) $(CFLAG) $(LIB)
+	$(CC) $(FILE).cpp -o $(OUTPUT) $(CFLAG) $(LIB)
 
 .PHONY:	util_test gps_parser_test
 
