@@ -1,4 +1,4 @@
-#include "util.hpp"
+#include "util.h"
 #include "testcommon.h"
 #include <string>
 #include <vector>
@@ -31,12 +31,12 @@ TEST(TEST_STRSPLIT4){
   assert( b == cmp );
 }
 
-TEST(TEST_STARTWITH1){
+TEST(TEST_STARTWITH_EQUAL){
   string a = "$GPGSV,1,2,3,4,,,";
   assert(StartWith(a, "$GPGSV"));
 }
 
-TEST(TEST_STARTWITH2){
+TEST(TEST_STARTWITH_NOTEQUAL){
   string a = "$GPGSV,1,2,3,4,,,";
   assert(!StartWith(a, "$GPGSA"));
 }
@@ -46,9 +46,10 @@ void TestUtil(){
   RUN_TEST(TEST_STRSPLIT2);
   RUN_TEST(TEST_STRSPLIT3);
   RUN_TEST(TEST_STRSPLIT4);
-  RUN_TEST(TEST_STARTWITH1);
-  RUN_TEST(TEST_STARTWITH2);
+  RUN_TEST(TEST_STARTWITH_EQUAL);
+  RUN_TEST(TEST_STARTWITH_NOTEQUAL);
 }
+
 int main(){
   TestUtil();
   return 0;

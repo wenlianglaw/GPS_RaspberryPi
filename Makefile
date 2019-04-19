@@ -1,21 +1,37 @@
 CC=g++
 FILE=gps_raspberry_pi_main
 OUTPUT=gps_raspberry_pi
-LIB=-lwiringPi -lwiringPiDev -lpthread
-CFLAG=-std=c++17 -Wall
+LIBS= -lpthread#-lwiringPi -lwiringPiDev
+CFLAGS=-std=c++17 -Wall
 
-all:	compile
+SRC_FILES= gps_parser.cpp \
+					 gps_raspberry_pi_main.cpp \
+					 util.cpp
 
-compile:
-	$(CC) $(FILE).cpp -o $(OUTPUT) $(CFLAG) $(LIB)
+OBJ=	$(patsubst %.cpp,%.o,$(SRC_FILES))
 
-.PHONY:	util_test gps_parser_test
+all:	main clean
+	echo OBJ $(OBJ)
 
-util_test:
-	$(CC) util_test.cpp -o util_test $(CFLAG)
-	./util_test
+main: $(OBJ)
+	$(CC) $(OBJ) -o $(OUTPUT) $(LIBS) $(CFLAGS)
+
+%.o:	%.cpp
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+clean:
+	rm ./*.o
+
+# Tests
+gps_parser_test: gps_parser.o
+	$(CC) gps_parser_test.cpp -o gps_parser_test $(CFLAGS)
+	./$@
+	rm ./$@
+
+util_test: util.o
+	$(CC) util_test.cpp util.o -o util_test $(CFLAGS)
+	./$@
+	rm $@
 
 
-gps_parser_test:
-	$(CC) gps_parser_test.cpp -o gps_parser_test $(CFLAG)
-	./gps_parser_test
+.PHONY:	util_test gps_parser_test main
