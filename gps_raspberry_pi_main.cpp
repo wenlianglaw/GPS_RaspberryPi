@@ -53,7 +53,6 @@ void ReceiveGPS_Thread( int fd ){
   Print(DEBUG, "Starting ReceiveGPS_Thread");
   string buffer;
   while(true){
-    /*
     try{
       if(::serialDataAvail(fd)){
         int ch = ::serialGetchar(fd);
@@ -70,7 +69,6 @@ void ReceiveGPS_Thread( int fd ){
       Print(ERROR, "ReceiveGPS_Thread");
       cout<<e.what()<<endl;
     }
-    */
     std::this_thread::sleep_for(chrono::seconds(1));
   }
 }
