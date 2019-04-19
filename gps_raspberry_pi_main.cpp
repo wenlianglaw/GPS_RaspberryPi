@@ -1,8 +1,8 @@
 //#define DISABLE_INFO_MSG
 //#define DISABLE_DEBUG_MSG
 
-#include "util.hpp" 
-#include "gps_parser.hpp"
+#include "util.h" 
+#include "gps_parser.h"
 
 #include <iostream>
 #include <thread>
@@ -26,7 +26,6 @@ vector<string> g_gps_sentence_pool;
 void ParseGPS_Thread(){
   Print(DEBUG, "Starting ParseGPS_Thread");
   GPSUnit gps_unit;
-  GPSParser parser;
   Print(DEBUG, "Parsing...");
   while(true){
     g_mutex.lock();
@@ -39,7 +38,7 @@ void ParseGPS_Thread(){
       gps_sentence_pool.pop_back();
       try{
         Print(ERROR, "thread:Parse sentence:", gps_sentence);
-        parser.Parse(gps_sentence, &gps_unit);
+        gps_parser::Parse(gps_sentence, &gps_unit);
       }catch(exception e){
         Print(ERROR, "ParseGPS_Thread");
         cout<<e.what()<<endl;
@@ -54,6 +53,7 @@ void ReceiveGPS_Thread( int fd ){
   Print(DEBUG, "Starting ReceiveGPS_Thread");
   string buffer;
   while(true){
+    /*
     try{
       if(::serialDataAvail(fd)){
         int ch = ::serialGetchar(fd);
@@ -70,6 +70,8 @@ void ReceiveGPS_Thread( int fd ){
       Print(ERROR, "ReceiveGPS_Thread");
       cout<<e.what()<<endl;
     }
+    */
+    std::this_thread::sleep_for(chrono::seconds(1));
   }
 }
 
@@ -80,11 +82,10 @@ void Help(){
 
 
 int main(int argc, char**argv){
-
   wiringPiSetup();
   Help();
   if(argc <2)  return 1;
-  if(argc==3) g_fix = stof(string(argv[2]));
+  if(argc==3) gps_parser::fix = stof(string(argv[2]));
 
   int fd = serialOpen(argv[1], 9600);
   if( fd < 0 ) { cout<<"Cannot open serial"<<endl; return 1; }
