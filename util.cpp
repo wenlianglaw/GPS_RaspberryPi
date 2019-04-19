@@ -6,7 +6,7 @@ bool StartWith(const string& str, const string& word){
   unsigned int i = 0;
   for( ;i<word.size() && same; i++)
     same = word[i] == str[i];
-  return i == word.size();
+  return same && i == word.size();
 }
 
 vector<string> StrSplit( const string& str, const string& delim ){
