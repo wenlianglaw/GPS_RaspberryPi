@@ -1,4 +1,6 @@
 *ycm*.py
 *.swp
+*.swo
+*.swn
 
 gps_raspberry_pi

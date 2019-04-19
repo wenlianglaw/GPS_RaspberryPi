@@ -1,3 +1,6 @@
+//#define DISABLE_INFO_MSG
+//#define DISABLE_DEBUG_MSG
+
 #include "util.hpp" 
 #include <iostream>
 #include <thread>
@@ -11,124 +14,211 @@
 #include <ctime>
 #include <time.h>
 #include <mutex>
+#include <fstream>
 
 #define _UNUSED_ __attribute__((unused))
-#undef DISABLE_INFO_MSG
-//#undef DISABLE_DEBUG_MSG
 
 using namespace std;
 
-
 std::mutex g_mutex;
+
+/* IMPORTANT     IMPORTANT
+ * This fix comes with the GPS module. */
+float g_fix = 1.6667;
 
 vector<string> g_gps_sentence_pool;
 
-
 class GPSUnit{
+  public:
   /* GPGGA */
-  float latitude_ = 0.0f;
-  string NS_ = "N";
-  float longitutde_ = 0.0f;
-  string EW_ = "E";
+  float latitude_;
+  string NS_;
+  float longitutde_;
+  string EW_;
+  string google_map_url_;
   // 225446 Time of fix 22:54:46 UTC
-  string time_ = "145902";
+  string time_;
   // GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
-  int gps_quality_indicator_ = 0;
+  int quality_indicator_;
   // Number of satellites in use [not those in view]
-  int num_of_satellites_ = 0;
+  int num_of_satellites_;
   // Antenna altitude above/below mean sea level (geoid)
-  float antena_altitude_sea_ = 0.0f;
+  float antena_altitude_sea_;
   // Meters  (Antenna height unit)
-  string antenna_height_unit_ = "M";
+  string antenna_altitude_unit_;
   // Geoidal separation (Diff. between WGS-84 earth ellipsoid and
   // mean sea level.  -=geoid is below WGS-84 ellipsoid)
-  float geoidal_separation_ = 0.0f;
+  float geoidal_separation_;
   // Meters  (Units of geoidal separation)
-  string geoidal_separation_unit_ = "M";
+  string geoidal_separation_unit_;
   // Age in seconds since last update from diff. reference station
-  float seconds_since_last_diff_ = 0.0f;
-  // Diff. reference station ID#
-  int diff_ref_station_id_ = -1;
-
+  float seconds_since_last_diff_;
+  // Diff. reference station ID#  x.x
+  string diff_ref_station_id_;
 
   /* GPRMC & GPVTG */
-  // A Navigation receiver warning A = OK, V = warning
-  string nav_receiver_warning_ = "A";
+  // A Navigation receiver warning A;
+  string nav_receiver_warning_;
   // 191194       Date of fix  19 November 1994
-  string date_ = "010119";
+  string date_;
   // 4916.45,N    Latitude 49 deg. 16.45 min North
-  float latitude_degree_ = 0.0f;
-  string latitude_deg_NS_ = "N";
+  float latitude_degree_;
+  string latitude_deg_NS_;
   // 12311.12,W   Longitude 123 deg. 11.12 min West
-  float longitude_degree_ = 0.0f;
-  string longitude_deg_SW_ = "S";
+  float longitude_degree_;
+  string longitude_deg_SW_;
   // 000.5        Speed over ground.  knots and km/h
-  float speed_over_ground_knots_ = 0.0f;
-  float speed_over_ground_kmh_ = 0.0f;
+  float speed_over_ground_knots_;
+  string speed_over_ground_knots_unit_;
+  float speed_over_ground_kmh_;
+  string speed_over_ground_kmh_unit_;
   // 054.7        Course Made Good, True
-  float course_made_good_ = 0.0f;
+  float course_made_good_;
   // 020.3,E      Magnetic variation 20.3 deg East
-  float magnetic_variation_ = 0.0f;
-  string magnetic_variation_EW_ = "E";
+  float magnetic_variation_;
+  string magnetic_variation_EW_;
 
   /* GPVTG */
   // 054.7,T Track made good
-  float track_made_good_ = 0.0f;
+  float track_made_good_;
+  string track_made_good_t_;
 
   /* GPGSA */
   /* 
-   *   1    = Mode:
+   *   1   ;
    *     M=Manual, forced to operate in 2D or 3D
    *     A=Automatic, 3D/2D
    */
-  string manual_auto_mode_ = 0;
+  string manual_auto_mode_;
 
   /*
-   * 2    = Mode:
+   * 2   ;
    *   1=Fix not available
    *   2=2D
    *   3=3D
    */
-  int mode_2d_3d_ = 1;
+  int mode_2d_3d_;
 
   // TDOP (clock offset)
-  float pdop_ = 0.0f;
+  float pdop_;
   // HDOP (latitude/longitude)
-  float hdop_ = 0.0f;
+  float hdop_;
   // VDOP (altitude)
-  float vdop_ = 0.0f;
+  float vdop_;
+
+  GPSUnit(){
+    /* GPGGA */
+    latitude_ = 0.0f;
+    NS_ = "N";
+    longitutde_ = 0.0f;
+    EW_ = "E";
+    google_map_url_ = "";
+    // 225446 Time of fix 22:54:46 UTC
+    time_ = "145902";
+    // GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
+    quality_indicator_ = 0;
+    // Number of satellites in use [not those in view]
+    num_of_satellites_ = 0;
+    // Antenna altitude above/below mean sea level (geoid)
+    antena_altitude_sea_ = 0.0f;
+    // Meters  (Antenna height unit)
+    antenna_altitude_unit_ = "M";
+    // Geoidal separation (Diff. between WGS-84 earth ellipsoid and
+    // mean sea level.  -=geoid is below WGS-84 ellipsoid)
+    geoidal_separation_ = 0.0f;
+    // Meters  (Units of geoidal separation)
+    geoidal_separation_unit_ = "M";
+    // Age in seconds since last update from diff. reference station
+    seconds_since_last_diff_ = 0.0f;
+    // Diff. reference station ID#  x.x
+    diff_ref_station_id_ = "";
+
+    /* GPRMC & GPVTG */
+    // A Navigation receiver warning A = OK, V = warning
+    nav_receiver_warning_ = "A";
+    // 191194       Date of fix  19 November 1994
+    date_ = "010119";
+    // 4916.45,N    Latitude 49 deg. 16.45 min North
+    latitude_degree_ = 0.0f;
+    latitude_deg_NS_ = "N";
+    // 12311.12,W   Longitude 123 deg. 11.12 min West
+    longitude_degree_ = 0.0f;
+    longitude_deg_SW_ = "S";
+    // 000.5        Speed over ground.  knots and km/h
+    speed_over_ground_knots_ = 0.0f;
+    speed_over_ground_knots_unit_ = "N";
+    speed_over_ground_kmh_ = 0.0f;
+    speed_over_ground_kmh_unit_ = "K";
+    // 054.7        Course Made Good, True
+    course_made_good_ = 0.0f;
+    // 020.3,E      Magnetic variation 20.3 deg East
+    magnetic_variation_ = 0.0f;
+    magnetic_variation_EW_ = "E";
+
+    /* GPVTG */
+    // 054.7,T Track made good
+    track_made_good_ = 0.0f;
+    track_made_good_t_ = "T";
+
+    /* GPGSA */
+    /* 
+     *   1    = Mode:
+     *     M=Manual, forced to operate in 2D or 3D
+     *     A=Automatic, 3D/2D
+     */
+    manual_auto_mode_ = "M";
+
+    /*
+     * 2    = Mode:
+     *   1=Fix not available
+     *   2=2D
+     *   3=3D
+     */
+    mode_2d_3d_ = 1;
+
+    // TDOP (clock offset)
+    pdop_ = 0.0f;
+    // HDOP (latitude/longitude)
+    hdop_ = 0.0f;
+    // VDOP (altitude)
+    vdop_ = 0.0f;
+  }
+
+  void Clear(){
+    *this = GPSUnit();
+  }
+
 };
 
 class GPSParser{
   public:
-    // TDOP (clock offset)
-    float pdop_ = 1.0f;
-    // HDOP (latitude/longitude)
-    float hdop_ = 1.0f;
-    // VDOP (altitude)
-    float vdop_ = 1.0f;
-
     // http://aprs.gids.nl/nmea
-    void Parse(const string& gps){
-      Print(ERROR, gps);
-      auto words = StrSplit(gps, ",");
-      if( StartWith(gps, "$GPVTG") ){
-        Print(INFO, "Parsing:", gps);
-        ParseGPVTG(words);
-      } else if( StartWith(gps, "$GPRMC") ) {
-        Print(INFO, "Parsing:", gps);
-        ParseGPRMC(words);
-      } else if( StartWith(gps, "$GPGSA") ) {
-        Print(INFO, "Parsing:", gps);
-      } else if( StartWith(gps, "$GPGGA") ){
-        Print(INFO, "Parsing:", gps);
-        ParseGPGGA(words);
+    void Parse(const string& gps_msg, GPSUnit* gps_unit){
+      Print(INFO, gps_msg);
+      auto words = StrSplit(gps_msg, ",");
+      if( StartWith(gps_msg, "$GPVTG") ){
+        Print(INFO, "Parsing:", gps_msg);
+        ParseGPVTG(words, gps_unit);
+      } else if( StartWith(gps_msg, "$GPRMC") ) {
+        Print(INFO, "Parsing:", gps_msg);
+        ParseGPRMC(words, gps_unit);
+      } else if( StartWith(gps_msg, "$GPGSA") ) {
+        Print(INFO, "Parsing:", gps_msg);
+        ParseGPGSA(words, gps_unit);
+      } else if( StartWith(gps_msg, "$GPGGA") ){
+        Print(INFO, "Parsing:", gps_msg);
+        ParseGPGGA(words, gps_unit);
+      } else if( StartWith(gps_msg, "$GPGSV") ){
+        Print(ERROR,"-----------------------------");
+        Print(ERROR, "Not implemented yet.");
       } else{
+        Print(ERROR,"-----------------------------");
         Print(ERROR, "Not a PGS sentence. Skip.");
       }
     }
+
   private:
-    void ParseGPGSA(const vector<string>& words){
+    void ParseGPGSA(const vector<string>& words, GPSUnit* gps_unit){
       /*
        * $GPGSA
        * GPS DOP and active satellites
@@ -148,29 +238,34 @@ class GPSParser{
        *   16   = HDOP
        *   17   = VDOP
        */
-       int i=1;
-       const string& manual_auto_mode _UNUSED_ = words[i++];
+      PrintContainer(DEBUG, words);
+      Print(DEBUG, "words.size:", words.size());
+      int i=1;
+      gps_unit->manual_auto_mode_ = words[i++];
 
-       const string& mode_2d_3d _UNUSED_ = words[i++];
+      const string& str_mode_2d_3d = words[i++];
+      if(!str_mode_2d_3d.empty()){
+        gps_unit->mode_2d_3d_ = stoi(str_mode_2d_3d);
+      }
 
-       i = 15;
-       const string& str_pdop = words[i++];
-       if(!str_pdop.empty()){
-         pdop_ = stof(str_pdop);
-       }
+      i = 15;
+      const string& str_pdop = words[i++];
+      if(!str_pdop.empty()){
+        gps_unit->pdop_ = stof(str_pdop);
+      }
 
-       const string& str_hdop = words[i++];
-       if(!str_hdop.empty()){
-         hdop_ = stof(str_hdop);
-       }
+      const string& str_hdop = words[i++];
+      if(!str_hdop.empty()){
+        gps_unit->hdop_ = stof(str_hdop);
+      }
 
-       const string& str_vdop = words[i++];
-       if(!str_vdop.empty()){
-         vdop_ = stof(str_vdop);
-       }
+      const string& str_vdop = words[i++];
+      if(!str_vdop.empty()){
+        gps_unit->vdop_ = stof(str_vdop);
+      }
     }
 
-    void ParseGPVTG(const vector<string>& words){
+    void ParseGPVTG(const vector<string>& words, GPSUnit* gps_unit){
       /*
        * Track Made Good and Ground Spped.
        * eg1. $GPVTG,360.0,T,348.7,M,000.0,N,000.0,K*43
@@ -201,40 +296,40 @@ class GPSParser{
        *     x.x,K = Speed, Km/hr
        */
       int i=1;
-       // 1    = Track made good
+      // 1    = Track made good
       const string& str_track_made_good = words[i++];
       if(!str_track_made_good.empty()){
-        float track_made_good = stof(str_track_made_good);
+        gps_unit->track_made_good_ = stof(str_track_made_good);
       }
       // 2   = Fixed text 'T' indicates that track made good is relative to true north
-      const string& track_made_good_T _UNUSED_ = words[i++];
+      gps_unit->track_made_good_t_ = words[i++];
 
       // 3    = not used
       i++;
       // 4    = not used
       i++;
 
-       // 5    = Speed over ground in knots
+      // 5    = Speed over ground in knots
       const string& str_speed_over_ground_kt = words[i++];
       if(!str_speed_over_ground_kt.empty()){
-        float speed_over_ground_kt = stof(str_speed_over_ground_kt);
+        gps_unit->speed_over_ground_knots_ = stof(str_speed_over_ground_kt);
       }
       // 6    = Fixed text 'N' indicates that speed over ground in in knots
-      const string& speed_over_ground_kt_unit _UNUSED_ = words[i++];
+      gps_unit->speed_over_ground_knots_unit_ = words[i++];
 
       // 7    = Speed over ground in kilometers/hour
       const string& str_speed_over_ground_km = words[i++];
       if(!str_speed_over_ground_km.empty()){
-        float speed_over_ground_km = stof(str_speed_over_ground_km);
+        gps_unit->speed_over_ground_kmh_ = stof(str_speed_over_ground_km);
       }
       // 8    = Fixed text 'K' indicates that speed over ground is in kilometers/hour
-      const string& speed_over_ground_km_unit = words[i++];
+      gps_unit->speed_over_ground_kmh_unit_ = words[i++];
 
       // 9    = Checksum
       const string& checksum _UNUSED_ = words[i++];
     }
 
-    void ParseGPRMC(const vector<string>& words){
+    void ParseGPRMC(const vector<string>& words, GPSUnit* gps_unit){
       /*
        * Recommended minimum specific GPS/Transit data
 
@@ -292,7 +387,8 @@ class GPSParser{
       ParseGpsTime(gps_time);
 
       // Navigation receiver warning 
-      string nav_receiver_warning = words[i++];
+      gps_unit->nav_receiver_warning_ = words[i++];
+      string nav_receiver_warning = gps_unit->nav_receiver_warning_;
       if( !nav_receiver_warning.empty() ){
         if(nav_receiver_warning == "V"){
           Print(INFO, "Nav Receiver Warning.");
@@ -304,24 +400,25 @@ class GPSParser{
       ne = words[i++],
       longi = words[i++],
       sw = words[i++];
-      ParseLatAndLong(lat, longi, ne, sw);
+      ParseLatAndLong(lat, longi, ne, sw, gps_unit);
 
       // Speed over ground, Knots
       string str_speed_over_ground = words[i++];
       if(!str_speed_over_ground.empty()){
-        float speed_over_ground = stof(str_speed_over_ground);
-        Print(INFO, "Current Speed is:", speed_over_ground, "knots");
+        gps_unit->speed_over_ground_knots_ = stof(str_speed_over_ground);
+        Print(INFO, "Current Speed is:", gps_unit->speed_over_ground_knots_, "knots");
       }
 
       // Course Made Good, True
       string str_cmg = words[i++];
       if(!str_cmg.empty()){
-        float cmg = stof(str_cmg);
-        Print(INFO, "Course Made Good is:", cmg, "degree");
+        gps_unit->course_made_good_ = stof(str_cmg);
+        Print(INFO, "Course Made Good is:", gps_unit->course_made_good_ , "degree");
       }
 
       // 191194       Date of fix  19 November 1994
-      string date = words[i++];
+      gps_unit->date_ = words[i++];
+      string date = gps_unit->date_;
       if(!date.empty()){
         int day = stoi(date.substr(0,2));
         int month = stoi(date.substr(2,2));
@@ -331,15 +428,18 @@ class GPSParser{
 
       // 020.3,E      Magnetic variation 20.3 deg East
       string str_magnetic_variation = words[i++];
-      string mag_ew = words[i++];
+      if(!str_magnetic_variation.empty()){
+        gps_unit->magnetic_variation_ = stof(str_magnetic_variation);
+      }
+      gps_unit->magnetic_variation_EW_ = words[i++];
 
       // *68          mandatory checksum
       string check_sum = words[i];
       if( check_sum[0] == 'E' || check_sum[0] == 'W' )
-        mag_ew = check_sum[0];
+        gps_unit->magnetic_variation_EW_ = check_sum[0];
     }
 
-    void ParseGPGGA(const vector<string>& words){
+    void ParseGPGGA(const vector<string>& words, GPSUnit* gps_unit){
       /*
          $GPGGA
          Global Positioning System Fix Data
@@ -362,7 +462,8 @@ class GPSParser{
          Checksum	*75	Used by program to check for transmission errors
          Courtesy of Brian McClure, N8PQI.
 
-         Global Positioning System Fix Data. Time, position and fix related data for a GPS receiver.
+         Global Positioning System Fix Data. Time, position and fix related data 
+         for a GPS receiver.
 
          eg2. $--GGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx
 
@@ -400,23 +501,24 @@ class GPSParser{
          */
       PrintContainer(DEBUG, words);
       Print(DEBUG, "words.size=", words.size());
+
       int i = 1;
       // i = 1 Time
       string gps_time = words[i++];
       ParseGpsTime(gps_time);
 
       // Latitude, longitude
-      string latitude = words[i++], NE = words[i++];
-      string longitude = words[i++], SW = words[i++];
+      string latitude = words[i++], ne = words[i++];
+      string longitude = words[i++], sw = words[i++];
 
       // i = 6 fix quailty
       // 0 = INVALID
       // 1 = GPS fix
       // 2 = DGPS fix
-      string str_fix_quality = words[i++];
-      if( !str_fix_quality.empty() ){
-        int fix_quality = stoi(str_fix_quality);
-        switch(fix_quality){
+      string str_quality_indicator = words[i++];
+      if( !str_quality_indicator.empty() ){
+        gps_unit->quality_indicator_ = stoi(str_quality_indicator);
+        switch(gps_unit->quality_indicator_){
           case 1: Print(INFO, "GPS fix");break;
           case 2: Print(INFO, "DGPS fix");break;
           default:Print(INFO, "Invalid fix quality");break;
@@ -426,45 +528,60 @@ class GPSParser{
       // number of satellites
       string str_umber_of_satellites = words[i++];
       if( !str_umber_of_satellites.empty()){
-        int number_of_satellites = stoi(str_umber_of_satellites);
-        Print(INFO, "Satellites in use:", number_of_satellites);
+        gps_unit->num_of_satellites_ = stoi(str_umber_of_satellites);
+        Print(INFO, "Satellites in use:", gps_unit->num_of_satellites_);
       }
 
       Print(DEBUG, "i==", i);
       // Horizontal Dilution of Precision (HDOP)
       string str_hdop = words[i++];
       Print(INFO, "HDOP:", str_hdop);
-      float hdop = 1.0f;
-      if(!str_hdop.empty()) hdop = stof(str_hdop);
+      if(!str_hdop.empty()){
+        gps_unit->hdop_ = stof(str_hdop);
+      }
       Print(DEBUG, "i==", i);
-      ParseLatAndLong(latitude, longitude, NE, SW); 
+      if( !latitude.empty() && !longitude.empty() &&
+          !ne.empty() && !sw.empty()){
+        ParseLatAndLong(latitude, longitude, ne, sw, gps_unit); 
+      }
 
-      // i = 10. Altitude
+      // i = 9. Altitude
       string str_altitude = words[i++];
-      string altitute_unit = words[i++];
+      // i = 10. Altitude unit
+      gps_unit->antenna_altitude_unit_ = words[i++];
       if( !str_altitude.empty()){
-        float altitude = stof(str_altitude);
-        Print(INFO, "Altitude: ", altitude," ", altitute_unit);
+        gps_unit->antena_altitude_sea_ = stof(str_altitude);
+        Print(INFO, "Altitude: ", gps_unit->antena_altitude_sea_,
+            " ", gps_unit->antenna_altitude_unit_);
       }
 
 
       Print(DEBUG, "i==", i);
-      // Height of geoid above WGS85 ellipsoid
-      string str_height = words[i++];
-      string height_unit = words[i++];
-      if(!str_height.empty()){
-        float height = stof(str_height);
-        Print(INFO, "Height: ", height," ", height_unit);
+      // i = 11. Height of geoid above WGS85 ellipsoid
+      string str_geoid_sep = words[i++];
+      // i = 12. 11's unit
+      gps_unit->geoidal_separation_unit_ = words[i++];
+      if(!str_geoid_sep.empty()){
+        gps_unit->geoidal_separation_ = stof(str_geoid_sep);
+        Print(INFO, "Height: ", gps_unit->geoidal_separation_,
+            " ", gps_unit->geoidal_separation_unit_);
       }
 
       Print(DEBUG, "i==", i);
-      // Time since last DGPS update
+      // i = 13.  Time since last DGPS update
+      string str_time_since_last_dgps_update = words[i++];
+      if(!str_time_since_last_dgps_update.empty()){
+        gps_unit->seconds_since_last_diff_ = stof(str_time_since_last_dgps_update);
+      }
+      Print(DEBUG, "i==", i);
+
       // DGPS reference station id and DGPS ref.statio.id  format x.x
-      string dgps_station = words[i++];
-      Print(DEBUG, "i==", i);
+      if( i < (int)words.size()-1){
+        gps_unit->diff_ref_station_id_ = words[i++];
+      }
 
       // i = 14 Check sum
-      if( i < words.size()-1 ){
+      if( i < (int)words.size()-1 ){
         const string& check_sum _UNUSED_ = words[i++];
         Print(DEBUG, "i==", i);
       }
@@ -473,9 +590,7 @@ class GPSParser{
     void ParseGpsTime(const string& time){
       string gps_time = time;
       struct tm parsed_tm;
-      gps_time.insert(2,":");
-      gps_time.insert(5,":");
-      strptime(gps_time.c_str(), "%H:%M:%S", &parsed_tm);
+      strptime(gps_time.c_str(), "%H%M%S", &parsed_tm);
 
       auto ca_time = parsed_tm;
       const int local_time_diff = -7;
@@ -486,7 +601,8 @@ class GPSParser{
     }
 
     void ParseLatAndLong(const string& lat, const string& longi,
-        const string& NE, const string& SW){
+        const string& NE, const string& SW,
+        GPSUnit* gps_unit){
       string latitude = lat, longitude = longi;
       if( longitude.size() && latitude.size()){
         string google_map_url = "www.google.com/maps/place/";
@@ -494,23 +610,30 @@ class GPSParser{
         latitude.insert(dot_pos-2,".");
         latitude.erase(dot_pos+1,1);
         auto words = StrSplit(latitude, ".");
-        words[1] = to_string((int)(stoi(words[1])*pdop_));
+        words[1] = to_string((int)(stoi(words[1])*g_fix));
         latitude = words[0] + "." + words[1];
+        gps_unit->latitude_ = stof(latitude);
 
         dot_pos = longitude.find('.');
         longitude.insert(dot_pos-2,".");
         longitude.erase(dot_pos+1,1);
         words = StrSplit(longitude, ".");
-        words[1] = to_string((int)(stoi(words[1])*pdop_));
+        words[1] = to_string((int)(stoi(words[1])*g_fix));
         longitude = words[0] + "." + words[1];
+        gps_unit->longitutde_ = stof(longitude);
 
         google_map_url += latitude + NE + "+" + longitude + SW;
+        gps_unit->google_map_url_ = google_map_url;
         Print(INFO, google_map_url);
       }
     }
 };
 
-void ParseGPS_Thread( GPSParser* gps){
+void ParseGPS_Thread(){
+  Print(DEBUG, "Starting ParseGPS_Thread");
+  GPSUnit gps_unit;
+  GPSParser parser;
+  Print(DEBUG, "Parsing...");
   while(true){
     g_mutex.lock();
     auto gps_sentence_pool = g_gps_sentence_pool;
@@ -521,7 +644,8 @@ void ParseGPS_Thread( GPSParser* gps){
       string gps_sentence = gps_sentence_pool.back();
       gps_sentence_pool.pop_back();
       try{
-        gps->Parse(gps_sentence);
+        Print(ERROR, "thread:Parse sentence:", gps_sentence);
+        parser.Parse(gps_sentence, &gps_unit);
       }catch(exception e){
         Print(ERROR, "ParseGPS_Thread");
         cout<<e.what()<<endl;
@@ -530,10 +654,10 @@ void ParseGPS_Thread( GPSParser* gps){
     }
     std::this_thread::sleep_for(chrono::seconds(1));
   }
-
 }
 
 void ReceiveGPS_Thread( int fd ){
+  Print(DEBUG, "Starting ReceiveGPS_Thread");
   string buffer;
   while(true){
     try{
@@ -555,17 +679,26 @@ void ReceiveGPS_Thread( int fd ){
   }
 }
 
+void Help(){
+  cout<<"./gps_raspberry_pi device [fix]"<<endl;
+  cout<<"e.g\n\traspberry_pi /dev/ttyUSB0 1.667"<<endl;
+}
+
 
 int main(int argc, char**argv){
-  wiringPiSetup();
+  TestUtil();
 
-  int fd = serialOpen("/dev/ttyUSB0", 9600);
+  wiringPiSetup();
+  Help();
+  if(argc <2)  return 1;
+  if(argc==3) g_fix = stof(string(argv[2]));
+
+  int fd = serialOpen(argv[1], 9600);
   if( fd < 0 ) { cout<<"Cannot open serial"<<endl; return 1; }
 
-  GPSParser gps;
   try{
     thread receive_gps( ReceiveGPS_Thread, fd );
-    thread parse_gps( ParseGPS_Thread, &gps );
+    thread parse_gps(ParseGPS_Thread);
     receive_gps.join();
     parse_gps.join();
   }catch(exception e){
