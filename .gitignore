@@ -2,6 +2,7 @@
 *.swp
 *.swo
 *.swn
+*.o
 
 gps_raspberry_pi
 util_test
