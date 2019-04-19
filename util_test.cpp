@@ -8,8 +8,7 @@ using namespace std;
 TEST(TEST_STRSPLIT){
   string a = "a,b,c";
   auto b = StrSplit(a, ",");
-  vector<string> eq_v = {"a","b","c"};
-  assert(b == eq_v);
+  assert(b == vector<string>({"a","b","c"}));
 }
 
 TEST(TEST_STRSPLIT2){
