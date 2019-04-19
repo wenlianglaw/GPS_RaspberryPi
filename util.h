@@ -6,11 +6,6 @@
 #include <iostream>
 #include <ctime>
 
-using std::string;
-using std::vector;
-using std::cout;
-using std::endl;
-
 #define Level int
 #define DEBUG 0
 #define INFO 1
@@ -18,6 +13,12 @@ using std::endl;
 #define ERROR 3
 
 #define _UNUSED_ __attribute__((unused))
+
+
+using std::string;
+using std::vector;
+using std::cout;
+using std::endl;
 
 // Note: when word is empty always returns true.
 bool StartWith(const string& str, const string& word);
@@ -36,9 +37,11 @@ void PrintContainer(Level l, const T& container){
 #ifdef DISABLE_DEBUG_MSG
   if(l == DEBUG) return;
 #endif
-#ifdef DISABLE_DEBUG_MSG
+
+#ifdef DISABLE_INFO_MSG
   if(l == INFO) return;
 #endif
+
   for(auto it = container.begin(); it!=container.end(); it++){
     cout<<*it<<" ";
   }
@@ -50,9 +53,11 @@ void Print(Level l,  T... args ){
 #ifdef DISABLE_DEBUG_MSG
   if(l == DEBUG) return;
 #endif
+
 #ifdef DISABLE_INFO_MSG
   if(l == INFO) return;
 #endif
+
   (cout<<...<<args);
   cout<<endl;
 }

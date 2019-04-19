@@ -19,5 +19,3 @@ Using a global GPS message pool.
 2 threads.  The first thread receives the GPS message and insert it to the global GPS message pool.  The second thread parses
 the message pool every second.
 
-## PDOP, HDOP and VDOP
-

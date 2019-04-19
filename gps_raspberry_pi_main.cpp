@@ -37,7 +37,7 @@ void ParseGPS_Thread(){
       string gps_sentence = gps_sentence_pool.back();
       gps_sentence_pool.pop_back();
       try{
-        Print(ERROR, "thread:Parse sentence:", gps_sentence);
+        Print(INFO, "thread:Parse sentence:", gps_sentence);
         gps_parser::Parse(gps_sentence, &gps_unit);
       }catch(exception e){
         Print(ERROR, "ParseGPS_Thread");
@@ -68,6 +68,7 @@ void ReceiveGPS_Thread( int fd ){
     }catch( exception e){
       Print(ERROR, "ReceiveGPS_Thread");
       cout<<e.what()<<endl;
+      exit(-1);
     }
     std::this_thread::sleep_for(chrono::seconds(1));
   }
@@ -96,6 +97,7 @@ int main(int argc, char**argv){
   }catch(exception e){
     Print(ERROR, "Main exception");
     cout<<e.what()<<endl;
+    exit(-1);
   }
 
   cout<<"Exiting..."<<endl;
