@@ -24,12 +24,11 @@ clean:
 
 # Tests
 gps_parser_test: gps_parser.o
-	$(CC) gps_parser_test.cpp -o gps_parser_test $(CFLAGS)
+	$(CC) $@.cpp -o $@ $(CFLAGS)
 	./$@
 
 util_test: util.o
-	$(CC) util_test.cpp util.o -o util_test $(CFLAGS)
+	$(CC) $@.cpp util.o -o $@ $(CFLAGS)
 	./$@
-
 
 .PHONY:	util_test gps_parser_test main gps_parser_test

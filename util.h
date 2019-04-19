@@ -19,8 +19,16 @@ using std::endl;
 
 #define _UNUSED_ __attribute__((unused))
 
+// Note: when word is empty always returns true.
 bool StartWith(const string& str, const string& word);
+
+// Split string |str| by |delim| and returns each word in a vector.
 vector<string> StrSplit( const string& str, const string& delim );
+
+// Convert a GPS time |tm* tm| to string.
+// The difference between the built-in function is 
+// GPS time only contains HHMMSS. Therefore we don't 
+// need to print extra info, whereas the built-in fucntion prints.
 string AscGpsTime( std::tm* tm );
 
 template <typename T>

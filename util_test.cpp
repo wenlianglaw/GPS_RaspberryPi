@@ -34,11 +34,21 @@ TEST(TEST_STRSPLIT4){
 TEST(TEST_STARTWITH_EQUAL){
   string a = "$GPGSV,1,2,3,4,,,";
   assert(StartWith(a, "$GPGSV"));
+
+  a = "$GP";
+  assert(StartWith(a,""));
+  assert(StartWith(a,"$"));
+  assert(StartWith(a,"$G"));
+  assert(StartWith(a,"$GP"));
 }
 
 TEST(TEST_STARTWITH_NOTEQUAL){
   string a = "$GPGSV,1,2,3,4,,,";
   assert(!StartWith(a, "$GPGSA"));
+
+  a = "$GP";
+  assert(!StartWith(a, "."));
+  assert(!StartWith(a, "$GPA"));
 }
 
 void TestUtil(){
