@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <string>
 #include <cassert>
@@ -11,10 +13,6 @@ using namespace std;
 #define INFO 1
 #define WARNING 2
 #define ERROR 3
-
-#define DISABLE_DEBUG_MSG
-#define DISABLE_INFO_MSG
-
 
 bool StartWith(const string& str, const string& word){
   if(str.size() < word.size()) return false;
@@ -43,7 +41,6 @@ vector<string> StrSplit( const string& str, const string& delim ){
   return ret;
 }
 
-
 template <typename T>
 void PrintContainer(Level l, const T& container){
 #ifdef DISABLE_DEBUG_MSG
@@ -63,7 +60,7 @@ void Print(Level l,  T... args ){
 #ifdef DISABLE_DEBUG_MSG
   if(l == DEBUG) return;
 #endif
-#ifdef DISABLE_DEBUG_MSG
+#ifdef DISABLE_INFO_MSG
   if(l == INFO) return;
 #endif
   (cout<<...<<args);
@@ -120,9 +117,21 @@ TEST(TEST_STRSPLIT4){
   assert( b == cmp );
 }
 
+TEST(TEST_STARTWITH1){
+  string a = "$GPGSV,1,2,3,4,,,";
+  assert(StartWith(a, "$GPGSV"));
+}
+
+TEST(TEST_STARTWITH2){
+  string a = "$GPGSV,1,2,3,4,,,";
+  assert(!StartWith(a, "$GPGSA"));
+}
+
 void TestUtil(){
   RUN_TEST(TEST_STRSPLIT);
   RUN_TEST(TEST_STRSPLIT2);
   RUN_TEST(TEST_STRSPLIT3);
   RUN_TEST(TEST_STRSPLIT4);
+  RUN_TEST(TEST_STARTWITH1);
+  RUN_TEST(TEST_STARTWITH2);
 }
