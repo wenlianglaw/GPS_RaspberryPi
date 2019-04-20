@@ -4,6 +4,8 @@
 
 using std::string;
 
+namespace gps_parser{
+
 class GPSUnit{
   public:
   /* GPGGA */
@@ -165,4 +167,4 @@ class GPSUnit{
   }
 };
 
-
+} // namespace gps_parser

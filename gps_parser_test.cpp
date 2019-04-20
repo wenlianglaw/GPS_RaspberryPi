@@ -10,12 +10,13 @@ using namespace std;
 const char k_gpgga_test[] = "";
 const char k_gpgsa_test[] = "$GPGSA,A,1,,,,,,,,,,,,,,,*1E";
 
+// Workflow test: assert no fails.
 TEST(GPSPARSER_WORKFLOW_GPGGA){
-  GPSUnit gps_unit;
+  gps_parser::GPSUnit gps_unit;
   gps_parser::Parse(k_gpgsa_test, &gps_unit);
-  // assert no fail
 }
 
+// Workflow test: assert no fails.
 TEST(GPSPARSER_WORKFLOW_GPGSA){
 }
 
@@ -28,9 +29,8 @@ void RunTests(){
 
 
 int main(){
+  gps_parser::fix = 1.6667;
   RunTests();
 
   return 0;
 }
-
-

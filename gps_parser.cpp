@@ -15,7 +15,6 @@ using std::string;
 using std::vector;
 
 namespace gps_parser{
-
   static void ParseGPGSA(const std::vector<std::string>& words, GPSUnit* gps_unit);
   static void ParseGPVTG(const std::vector<std::string>& words, GPSUnit* gps_unit);
   static void ParseGPRMC(const std::vector<std::string>& words, GPSUnit* gps_unit);

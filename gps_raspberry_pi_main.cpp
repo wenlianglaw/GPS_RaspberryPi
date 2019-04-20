@@ -27,7 +27,7 @@ vector<string> g_gps_sentence_pool;
 
 void ParseGPS_Thread(){
   Print(DEBUG, "Starting ParseGPS_Thread");
-  GPSUnit gps_unit;
+  gps_parser::GPSUnit gps_unit;
   Print(DEBUG, "Parsing...");
   while(true){
     g_mutex.lock();
