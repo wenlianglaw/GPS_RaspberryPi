@@ -11,7 +11,6 @@ SRC_FILES= gps_parser.cpp \
 OBJ=	$(patsubst %.cpp,%.o,$(SRC_FILES))
 
 all:	main clean
-	echo OBJ $(OBJ)
 
 main: $(OBJ)
 	$(CC) $(OBJ) -o $(OUTPUT) $(LIBS) $(CFLAGS)
@@ -23,12 +22,12 @@ clean:
 	rm ./*.o
 
 # Tests
-gps_parser_test: gps_parser.o
-	$(CC) $@.cpp -o $@ $(CFLAGS)
+gps_parser_test: gps_parser.o util.o
+	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
 	./$@
 
 util_test: util.o
-	$(CC) $@.cpp util.o -o $@ $(CFLAGS)
+	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
 	./$@
 
 .PHONY:	util_test gps_parser_test main gps_parser_test

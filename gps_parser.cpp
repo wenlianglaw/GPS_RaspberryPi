@@ -67,33 +67,49 @@ namespace gps_parser{
      *   3-14 = IDs of SVs used in position fix (null for unused fields)
      *   15   = PDOP
      *   16   = HDOP
-     *   17   = VDOP
+     *   17   = VDOP & CheckSum
      */
     PrintContainer(DEBUG, words);
     Print(DEBUG, "words.size:", words.size());
     int i=1;
+    // 1    = Mode:
     gps_unit->manual_auto_mode_ = words[i++];
 
+    // 2    = Mode:
     const string& str_mode_2d_3d = words[i++];
     if(!str_mode_2d_3d.empty()){
       gps_unit->mode_2d_3d_ = stoi(str_mode_2d_3d);
     }
 
+    // 15   = PDOP
     i = 15;
     const string& str_pdop = words[i++];
     if(!str_pdop.empty()){
       gps_unit->pdop_ = stof(str_pdop);
     }
+    Print(DEBUG, "i=", i);
 
+    // 16   = HDOP
     const string& str_hdop = words[i++];
     if(!str_hdop.empty()){
       gps_unit->hdop_ = stof(str_hdop);
     }
 
-    const string& str_vdop = words[i++];
+    // 17   = VDOP & CheckSum
+    Print(DEBUG, "i=", i);
+    const string& str_vdop_checksum = words[i++];
+    string check_sum; 
+    string str_vdop;
+    size_t split = str_vdop_checksum.find("*");
+    str_vdop = str_vdop_checksum.substr(0,split);
+    check_sum = str_vdop_checksum.substr(split);
+    Print(DEBUG, "vdop=",str_vdop);
+    Print(DEBUG, "check_sum=",check_sum);
+
     if(!str_vdop.empty()){
       gps_unit->vdop_ = stof(str_vdop);
     }
+    Print(DEBUG, "i=", i);
   }
 
   void ParseGPVTG(const vector<string>& words, GPSUnit* gps_unit){

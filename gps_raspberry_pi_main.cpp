@@ -1,6 +1,8 @@
 //#define DISABLE_INFO_MSG
 //#define DISABLE_DEBUG_MSG
 
+#undef DISABLE_INFO_MSG
+
 #include "util.h" 
 #include "gps_parser.h"
 
@@ -70,7 +72,6 @@ void ReceiveGPS_Thread( int fd ){
       cout<<e.what()<<endl;
       exit(-1);
     }
-    std::this_thread::sleep_for(chrono::seconds(1));
   }
 }
 
@@ -78,7 +79,6 @@ void Help(){
   cout<<"./gps_raspberry_pi device [fix]"<<endl;
   cout<<"e.g\n\traspberry_pi /dev/ttyUSB0 1.667"<<endl;
 }
-
 
 int main(int argc, char**argv){
   wiringPiSetup();
