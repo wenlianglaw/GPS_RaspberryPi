@@ -25,8 +25,7 @@ For example:  my device name on my raspberry is /dev/ttyUSB0 -- depends on which
 My GPS ratio has a const coordinate fix 1.666,  I don't know it is only my gps module or all the modules of this modle or 
 other reasons, but it is 1.666.
 
-# Tests
-```make util_test``` to test util library.
+```make util_test``` to test util library.  
 ```make gps_parser_test``` to test parser.
 
 
