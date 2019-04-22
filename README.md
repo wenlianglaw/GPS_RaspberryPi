@@ -23,7 +23,7 @@ make
 ```
 For example:  my device name on my raspberry is /dev/ttyUSB0 -- depends on which the port I plugged in.  
 My GPS ratio has a const coordinate fix ratio 1.666,  I don't know it is only my gps module or all the modules of this modle or 
-other reasons, but it is 1.666.
+other reasons, but it is 1.666. After applying the 1.666 ratio on the latitude and longitude, it brings me <5 m error on Google map.
 
 ```make util_test``` to test util library.  
 ```make gps_parser_test``` to test parser.
