@@ -1,4 +1,4 @@
-#undef DISABLE_DEBUG_MSGo
+#undef DISABLE_DEBUG_MSG
 
 #include "gps_parser.h"
 
@@ -16,6 +16,7 @@ TEST(GPSPARSER_WORKFLOW_GPGGA){
   gps_parser::Parse(k_gpgsa_test, &gps_unit);
 }
 
+// TODO
 // Workflow test: assert no fails.
 TEST(GPSPARSER_WORKFLOW_GPGSA){
 }
@@ -29,7 +30,7 @@ void RunTests(){
 
 
 int main(){
-  gps_parser::fix = 1.6667;
+  gps_parser::fix = 1.666;
   RunTests();
 
   return 0;
