@@ -22,7 +22,7 @@ make
 ./gps_raspberry_pi {Your Device Name} [Fix Ratio]
 ```
 For example:  my device name on my raspberry is /dev/ttyUSB0 -- depends on which the port I plugged in.  
-My GPS ratio has a const coordinate fix 1.666,  I don't know it is only my gps module or all the modules of this modle or 
+My GPS ratio has a const coordinate fix ratio 1.666,  I don't know it is only my gps module or all the modules of this modle or 
 other reasons, but it is 1.666.
 
 ```make util_test``` to test util library.  
