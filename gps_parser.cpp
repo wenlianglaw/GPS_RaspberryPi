@@ -40,12 +40,13 @@ namespace gps_parser{
       ParseGPGSV(words, gps_unit);
     } else{
       Print(ERROR,"-----------------------------");
-      Print(ERROR, "Not a GPS sentence. Skip.");
+      Print(ERROR, "A GPS sentence that cannot parse. Skipped.");
     }
   }
 
   /*
    * https://docs.novatel.com/OEM7/Content/Logs/GPGSV.htm
+    |----------+-----------+-----------------------------------------------------------|
     | field    | structure | description                                               |
     |----------+-----------+-----------------------------------------------------------|
     | 1        | $GPGSV    | Log header. For information about the log headers,        |
