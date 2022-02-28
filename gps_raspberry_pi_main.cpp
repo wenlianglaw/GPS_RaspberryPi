@@ -74,10 +74,6 @@ void ParseGPS_Thread(){
       }catch(exception e){
         std::cerr << "ParseGPS_Thread Failed"  << std::endl;
         cout<<e.what()<<endl;
-
-        std::unique_lock<std::mutex> lk(g_mutex);
-        g_gps_sentence_pool.clear();
-        lk.unlock();
       }
     }
   }
