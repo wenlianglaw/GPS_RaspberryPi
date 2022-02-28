@@ -1,9 +1,9 @@
 #pragma once
 
 #define  RUN_TEST(FuncName) {\
-  printf("Testing %s\n", #FuncName);\
+  printf("============Testing %s==============\n", #FuncName);\
   FuncName();\
-  printf("%s passed!\n\n", #FuncName);\
+  printf("=======================Tests Ends========================\n\n");\
 }
 #define TEST(FuncName) void FuncName()
 

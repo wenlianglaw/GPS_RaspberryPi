@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 using std::string;
 
@@ -84,6 +85,59 @@ class GPSUnit{
   // VDOP (altitude)
   float vdop_;
 
+  /******* GPGSV ***********/
+  // https://docs.novatel.com/OEM7/Content/Logs/GPGSV.htm
+
+  // symbol x
+  int number_of_msgs_ = 1;
+  // symbol x
+  int msg_no_ = 1;
+  // symbol xx
+  int satellites_int_view_ = 0;
+  
+  // symbol xx
+  // Satellite PRN number
+  // GPS = 1 to 32
+  // Galileo = 1 to 36
+  // BeiDou = 1 to 63
+  // NavIC = 1 to 14
+  // QZSS = 1 to 10
+  // SBAS = 33 to 64 (add 87 for PRN#s)
+  // GLONASS = 65 to 96 1
+  // 
+  // Satellite i's prn number.
+  std::vector<int> satellite_prn_;
+
+  // symbol xx
+  // Elevation, degrees, 90 maximum
+  // 
+  // Satellite i's elevation.
+  std::vector<int> elevation_;
+
+  // symbol xxx
+  // Azimuth, degrees True, 000 to 359
+  //
+  // Satellite i's azimuth.
+  std::vector<int> azimuth_;
+
+  // symbol xx
+  // SNR (C/No) 00-99 dB, null when not tracking
+  //
+  // Satellite i's snr.
+  std::vector<int> snr_;
+
+  // GNSS system ID. See Table: System and Signal IDs
+  // (https://docs.novatel.com/OEM7/Content/Logs/GPGRS.htm#System)
+  //
+  // This field is only output if the NMEAVERSION is 4.11 (see the NMEAVERSION
+  // command) https://docs.novatel.com/OEM7/Content/Commands/NMEAVERSION.htm
+  std::string system_id_;
+
+  // symbol *hh
+  std::string check_sum_;
+
+
+  /*********** Constructor *************/
   GPSUnit(){
     /* GPGGA */
     latitude_ = 0.0f;

@@ -1,8 +1,3 @@
-//#define DISABLE_INFO_MSG
-//#define DISABLE_DEBUG_MSG
-
-#undef DISABLE_INFO_MSG
-
 #include "util.h" 
 #include "gps_parser.h"
 
@@ -19,22 +14,25 @@
 #include <time.h>
 #include <mutex>
 #include <fstream>
+#include <queue>
+#include <condition_variable>
 
 using namespace std;
 
 std::mutex g_mutex;
-vector<string> g_gps_sentence_pool;
+std::condition_variable g_cv;
+std::vector<string> g_gps_sentence_pool;
 
 void ParseGPS_Thread(){
   Print(DEBUG, "Starting ParseGPS_Thread");
   gps_parser::GPSUnit gps_unit;
   Print(DEBUG, "Parsing...");
   while(true){
-    g_mutex.lock();
+    std::unique_lock<std::mutex> lk(g_mutex);
+    g_cv.wait(lk, []{return !g_gps_sentence_pool.empty();});
     auto gps_sentence_pool = g_gps_sentence_pool;
     g_gps_sentence_pool.clear();
-    g_mutex.unlock();
-
+    lk.unlock();
     while( gps_sentence_pool.size() ){
       string gps_sentence = gps_sentence_pool.back();
       gps_sentence_pool.pop_back();
@@ -47,7 +45,6 @@ void ParseGPS_Thread(){
         exit (-1);
       }
     }
-    std::this_thread::sleep_for(chrono::seconds(1));
   }
 }
 
@@ -60,9 +57,10 @@ void ReceiveGPS_Thread( int fd ){
         int ch = ::serialGetchar(fd);
         if( ch >= 0 && ch <= 128 ){
           if( (char)ch == '$' && buffer.size() ){
-            g_mutex.lock();
+            std::unique_lock<std::mutex> lk(g_mutex);
             g_gps_sentence_pool.push_back(std::move(buffer));
-            g_mutex.unlock();
+            lk.unlock();
+            g_cv.notify_all();
           }
           buffer.push_back(ch);
         }
@@ -76,8 +74,9 @@ void ReceiveGPS_Thread( int fd ){
 }
 
 void Help(){
-  cout<<"./gps_raspberry_pi device [fix]"<<endl;
+  cout<<"./gps_raspberry_pi device [error fix multiplier]"<<endl;
   cout<<"e.g\n\traspberry_pi /dev/ttyUSB0 1.667"<<endl;
+  cout<<"e.g\n\traspberry_pi /dev/ttyUSB1 1.667"<<endl;
 }
 
 int main(int argc, char**argv){
