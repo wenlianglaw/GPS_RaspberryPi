@@ -7,8 +7,6 @@
 #include "gps_unit.h"
 
 using std::string;
-using std::vector;
-
 
 namespace gps_parser{
   /* IMPORTANT     IMPORTANT
@@ -19,7 +17,6 @@ namespace gps_parser{
    * Parse a gps sentence into gps_unit.
    */
   void Parse(const std::string& gps_msg, GPSUnit* gps_unit);
-
 } // namespace gps_parser
 
 

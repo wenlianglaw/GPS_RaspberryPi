@@ -2,6 +2,8 @@
 
 #include "gps_unit.h"
 
+#include "config.h"
+
 #include <vector>
 #include <string>
 #include <cassert>
@@ -63,8 +65,4 @@ void Print(Level l,  T... args ){
   (cout<<...<<args);
   cout<<endl;
 }
-
-void WriteGPSUnit(const gps_parser::GPSUnit& gps_unit);
-void ParseGPSUnitFromBytes(const char* ch, unsigned int size,
-    gps_parser::GPSUnit* gps_unit);
 

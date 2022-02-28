@@ -32,12 +32,3 @@ string AscGpsTime( std::tm* tm ){
   return string(ch);
 }
 
-
-// TODO Going to use protobuf.
-// Then add test.
-void WriteGPSUnit(const gps_parser::GPSUnit& gps_unit,
-    const string& filename){
-}
-void ParseGPSUnitFromBytes(const char* ch, unsigned int size,
-    gps_parser::GPSUnit* gps_unit){
-}
