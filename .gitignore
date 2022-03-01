@@ -3,6 +3,8 @@
 *.swo
 *.swn
 *.o
+log/*
+*.log
 
 gps_raspberry_pi
 util_test

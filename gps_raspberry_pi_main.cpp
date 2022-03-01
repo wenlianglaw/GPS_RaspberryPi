@@ -1,7 +1,9 @@
 #include "util.h" 
 #include "gps_parser.h"
+#include "file_writer.h"
 
 #include <iostream>
+#include <ostream>
 #include <stdexcept>
 #include <thread>
 #include <chrono>
@@ -16,7 +18,9 @@
 #include <mutex>
 #include <fstream>
 #include <queue>
+#include <iomanip>
 #include <condition_variable>
+#include <sstream>
 
 using namespace std;
 
@@ -57,8 +61,12 @@ int ConnectToSerialPort(const std::string& port) {
 
 void ParseGPS_Thread(){
   Print(DEBUG, "Starting ParseGPS_Thread");
+
   gps_parser::GPSUnit gps_unit;
-  Print(DEBUG, "Parsing...");
+  gps_parser::GPSParser parser;
+
+  gps_parser::FileWriter file_writer; 
+
   while(true) {
     std::unique_lock<std::mutex> lk(g_mutex);
     g_cv.wait(lk, []{return !g_gps_sentence_pool.empty();});
@@ -66,14 +74,18 @@ void ParseGPS_Thread(){
     g_gps_sentence_pool.clear();
     lk.unlock();
     while( gps_sentence_pool.size() ){
-      string gps_sentence = gps_sentence_pool.back();
+      string gps_statement = gps_sentence_pool.back();
       gps_sentence_pool.pop_back();
       try{
-        Print(INFO, "thread:Parse sentence:", gps_sentence);
-        gps_parser::Parse(gps_sentence, &gps_unit);
-      }catch(exception e){
-        std::cerr << "ParseGPS_Thread Failed"  << std::endl;
-        cout<<e.what()<<endl;
+        Print(DEBUG, "thread:Parse sentence:", gps_statement);
+        bool parsed = parser.Parse(gps_statement, &gps_unit);
+        if (parsed) {
+          file_writer.WriteRawMessage(gps_statement);
+        } else {
+          Print(INFO, "Not parsed", gps_statement);
+        }
+      } catch(...){
+        std::cerr << "Failed to parse a GPS message. Will continue."  << std::endl;
       }
     }
   }
@@ -98,7 +110,7 @@ void ReceiveGPS_Thread(const std::string& port){
   };
 
   while(true) { 
-    try{
+    try {
       if (NotReceivedDataForXSeconds(1)) {
         throw std::runtime_error(NOT_RECEIVE_DATA_ERR);
       }
@@ -129,20 +141,19 @@ void ReceiveGPS_Thread(const std::string& port){
 }
 
 void Help(){
-  cout<<"./gps_raspberry_pi device [error fix multiplier]"<<endl;
-  cout<<"e.g\n\traspberry_pi /dev/ttyUSB0 1.667"<<endl;
-  cout<<"e.g\n\traspberry_pi /dev/ttyUSB1 1.667"<<endl;
+  cout<<"./gps_raspberry_pi device"<<endl;
+  cout<<"e.g\n\traspberry_pi /dev/ttyUSB0"<<endl;
+  cout<<"e.g\n\traspberry_pi /dev/ttyUSB1"<<endl;
 }
+
 
 int main(int argc, char**argv){
   wiringPiSetup();
   Help();
   if(argc <2)  return 1;
-  if(argc==3) gps_parser::fix = std::stof(string(argv[2]));
+  std::string serial_port = argv[1];
 
-  std::string serial_port(argv[1]);
-
-  thread receive_gps( ReceiveGPS_Thread, serial_port );
+  thread receive_gps(ReceiveGPS_Thread, serial_port);
   thread parse_gps(ParseGPS_Thread);
   receive_gps.join();
   parse_gps.join();

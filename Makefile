@@ -6,7 +6,8 @@ CFLAGS=-std=c++17 -Wall
 
 SRC_FILES= gps_parser.cpp \
 					 gps_raspberry_pi_main.cpp \
-					 util.cpp
+					 util.cpp \
+					 file_writer.cpp
 
 OBJ=	$(patsubst %.cpp,%.o,$(SRC_FILES))
 
@@ -30,4 +31,4 @@ util_test: util.o
 	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
 	./$@
 
-.PHONY:	util_test gps_parser_test main gps_parser_test
+.PHONY:	util_test gps_parser_test main
