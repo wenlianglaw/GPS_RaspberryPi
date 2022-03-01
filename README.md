@@ -48,7 +48,7 @@ GPS modlue is connected to the Raspberry Pi board through the USB port `ttyUSB?`
 
 This program starts two threads to read and parse GPS sentenses respectively.
 
-The read thread reads the data from the USB port.  A GPS sentence always starts with '$' and end with '[CL][RF]'.  Once it receives a full sentense it will writes it to a shared pool.
+The read thread reads the data from the USB port.  A GPS sentence always starts with '$' and end with '[CR][LF]'.  Once it receives a full sentense it will writes it to a shared pool.
 
 And the parse thread parses this sentense from thsi shared pool.
 
