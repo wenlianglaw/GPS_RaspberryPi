@@ -10,7 +10,7 @@ SRC_FILES= gps_parser.cpp \
 
 OBJ=	$(patsubst %.cpp,%.o,$(SRC_FILES))
 
-all:	main clean
+all:	main 
 
 main: $(OBJ)
 	$(CC) $(OBJ) -o $(OUTPUT) $(LIBS) $(CFLAGS)
