@@ -4,6 +4,8 @@ OUTPUT=gps_raspberry_pi
 LIBS= -lpthread -lwiringPi -lwiringPiDev
 CFLAGS=-std=c++17 -Wall
 
+PORT?=0
+
 SRC_FILES= gps_parser.cpp \
 					 gps_raspberry_pi_main.cpp \
 					 util.cpp \
@@ -22,6 +24,10 @@ main: $(OBJ)
 clean:
 	rm ./*.o
 
+# Make and run
+run:
+	make && ./gps_raspberry_pi /dev/ttyUSB$(PORT)
+
 # Tests
 gps_parser_test: gps_parser.o util.o
 	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
@@ -33,4 +39,4 @@ util_test: util.o
 
 tests:	gps_parser_test util_test
 
-.PHONY:	util_test gps_parser_test main
+.PHONY:	util_test gps_parser_test main run
