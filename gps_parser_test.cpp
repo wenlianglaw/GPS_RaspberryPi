@@ -6,10 +6,7 @@
 #include <iostream>
 
 using gps_parser::GPSUnit;
-
-const char k_gpgga_test[] = "";
-const char k_gpgsa_test[] = "$GPGSA,A,1,,,,,,,,,,,,,,,*1E";
-
+using gps_parser::GPSParser;
 
 int g_test_pass = true;
 
@@ -24,14 +21,18 @@ void AssertEuqal(T a, U b) {
 
 // Workflow test: assert no fails.
 TEST(GPSPARSER_GPGGA){
-  gps_parser::GPSUnit gps_unit;
-  gps_parser::Parse(k_gpgsa_test, &gps_unit);
+  GPSParser parser;
+  GPSUnit gps_unit;
+  std::string test_str = "$GPGGA,134658.00,5106.9792,N,11402.3003,W,2,09,1.0,1048.47,M,-16.27,M,08,AAAA*60";
+  parser.Parse(test_str, &gps_unit);
 }
 
 TEST(GPSPARSER_GPGSV1) {
+  GPSParser parser;
   GPSUnit unit;
+
   std::string test_str = "$GPGSV,3,1,11,18,87,050,48,22,56,250,49,21,55,122,49,03,40,284,47*78";
-  gps_parser::Parse(test_str, &unit);
+  parser.Parse(test_str, &unit);
   AssertEuqal(unit.number_of_msgs_, 3);
   AssertEuqal(unit.msg_no_, 1);
   AssertEuqal(unit.satellites_int_view_, 11);
@@ -65,9 +66,10 @@ TEST(GPSPARSER_GPGSV1) {
 
 
 TEST(GPSPARSER_GPGSV2) {
+  GPSParser parser;
   GPSUnit unit;
   std::string test_str = "$GPGSV,3,3,11,09,15,107,44,14,11,196,41,07,03,173,*4D";
-  gps_parser::Parse(test_str, &unit);
+  parser.Parse(test_str, &unit);
 
   AssertEuqal(unit.number_of_msgs_, 3);
   AssertEuqal(unit.msg_no_, 3);
@@ -115,8 +117,6 @@ void RunTests(){
 
 
 int main(){
-  gps_parser::fix = 1.666;
   RunTests();
-
   return 0;
 }
