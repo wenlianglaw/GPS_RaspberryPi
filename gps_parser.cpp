@@ -1,6 +1,5 @@
 #include "gps_parser.h"
 
-#include "util.h"
 
 #include <string>
 #include <time.h>
@@ -11,19 +10,15 @@
 #include <mutex>
 #include <fstream>
 
+#include "util.h"
+#include "config.h"
+
 using std::string;
 using std::vector;
 
 namespace gps_parser{
 
   class GPSParser::Impl {
-    public:
-      /**************** IMPORTANT ****************/
-      // This fix vlaue is the multipler used on the attitude and longitude.
-      // This depends on the GPS module.
-      // Mine needs this mutiplier.
-      float fix = 1.6667;
-
     public:
       bool Parse(const string& gps_msg, GPSUnit* gps_unit); 
 
@@ -604,7 +599,7 @@ namespace gps_parser{
       latitude.erase(dot_pos+1,1);
       auto words = StrSplit(latitude, ".");
       if (!words[1].empty()) {
-        words[1] = std::to_string((int)(stoi(words[1])*fix));
+        words[1] = std::to_string((int)(stoi(words[1])*GPS_MODULE_FIX));
       }
       latitude = words[0] + "." + words[1];
       gps_unit->latitude_ = stof(latitude);
@@ -614,7 +609,7 @@ namespace gps_parser{
       longitude.erase(dot_pos+1,1);
       words = StrSplit(longitude, ".");
       if (!words[1].empty()) {
-        words[1] = std::to_string((int)(stoi(words[1])*fix));
+        words[1] = std::to_string((int)(stoi(words[1])*GPS_MODULE_FIX));
       }
       longitude = words[0] + "." + words[1];
       gps_unit->longitutde_ = stof(longitude);
