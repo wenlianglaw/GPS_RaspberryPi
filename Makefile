@@ -31,4 +31,6 @@ util_test: util.o
 	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
 	./$@
 
+tests:	gps_parser_test util_test
+
 .PHONY:	util_test gps_parser_test main

@@ -565,7 +565,8 @@ namespace gps_parser{
     // 13.  Time since last DGPS update
     string str_time_since_last_dgps_update = words[13];
     if(!str_time_since_last_dgps_update.empty()){
-      gps_unit->seconds_since_last_diff_ = stof(str_time_since_last_dgps_update);
+      gps_unit->seconds_since_last_diff_ = 
+        stof(str_time_since_last_dgps_update);
     }
 
     // 14. DGPS reference station id and DGPS ref.statio.id  format x.x
@@ -596,13 +597,15 @@ namespace gps_parser{
       const string& NE, const string& SW,
       GPSUnit* gps_unit){
     string latitude = lat, longitude = longi;
-    if( longitude.size() && latitude.size()){
+    if( longitude.size() && latitude.size()) {
       string google_map_url = "www.google.com/maps/place/";
       auto dot_pos = latitude.find('.');
       latitude.insert(dot_pos-2,".");
       latitude.erase(dot_pos+1,1);
       auto words = StrSplit(latitude, ".");
-      words[1] = std::to_string((int)(stoi(words[1])*fix));
+      if (!words[1].empty()) {
+        words[1] = std::to_string((int)(stoi(words[1])*fix));
+      }
       latitude = words[0] + "." + words[1];
       gps_unit->latitude_ = stof(latitude);
 
@@ -610,7 +613,9 @@ namespace gps_parser{
       longitude.insert(dot_pos-2,".");
       longitude.erase(dot_pos+1,1);
       words = StrSplit(longitude, ".");
-      words[1] = std::to_string((int)(stoi(words[1])*fix));
+      if (!words[1].empty()) {
+        words[1] = std::to_string((int)(stoi(words[1])*fix));
+      }
       longitude = words[0] + "." + words[1];
       gps_unit->longitutde_ = stof(longitude);
 
