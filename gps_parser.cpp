@@ -41,6 +41,8 @@ namespace gps_parser{
     } else{
       Print(ERROR,"-----------------------------");
       Print(ERROR, "A GPS sentence that cannot parse. Skipped.");
+      Print(ERROR, gps_msg);
+      Print(ERROR,"-----------------------------");
     }
   }
 
@@ -88,7 +90,6 @@ namespace gps_parser{
     |----------+-----------+-----------------------------------------------------------|
    */
   void ParseGPGSV(const std::vector<std::string>& words, GPSUnit* gps_unit) {
-    PrintContainer(DEBUG, words);
     Print(DEBUG, "Words.size", words.size());
     
     int i = 1;
@@ -184,7 +185,6 @@ namespace gps_parser{
    *   17   = VDOP & CheckSum
    */
   void ParseGPGSA(const vector<string>& words, GPSUnit* gps_unit){
-    PrintContainer(DEBUG, words);
     Print(DEBUG, "words.size:", words.size());
     int i=1;
     // 1    = Mode:
@@ -354,7 +354,7 @@ namespace gps_parser{
     string nav_receiver_warning = gps_unit->nav_receiver_warning_;
     if( !nav_receiver_warning.empty() ){
       if(nav_receiver_warning == "V"){
-        Print(INFO, "Nav Receiver Warning.");
+        Print(DEBUG, "Nav Receiver Warning.");
       }
     }
 
@@ -369,14 +369,14 @@ namespace gps_parser{
     string str_speed_over_ground = words[i++];
     if(!str_speed_over_ground.empty()){
       gps_unit->speed_over_ground_knots_ = stof(str_speed_over_ground);
-      Print(INFO, "Current Speed is:", gps_unit->speed_over_ground_knots_, "knots");
+      Print(DEBUG, "Current Speed is:", gps_unit->speed_over_ground_knots_, "knots");
     }
 
     // Course Made Good, True
     string str_cmg = words[i++];
     if(!str_cmg.empty()){
       gps_unit->course_made_good_ = stof(str_cmg);
-      Print(INFO, "Course Made Good is:", gps_unit->course_made_good_ , "degree");
+      Print(DEBUG, "Course Made Good is:", gps_unit->course_made_good_ , "degree");
     }
 
     // 191194       Date of fix  19 November 1994
@@ -386,7 +386,7 @@ namespace gps_parser{
       int day = stoi(date.substr(0,2));
       int month = stoi(date.substr(2,2));
       int year = stoi(date.substr(4));
-      Print(INFO, "Gps date:", day, " ", month, " ", year + 2000);
+      Print(DEBUG, "Gps date:", day, " ", month, " ", year + 2000);
     }
 
     // 020.3,E      Magnetic variation 20.3 deg East
@@ -463,7 +463,6 @@ namespace gps_parser{
      15   = Checksum
      */
   void ParseGPGGA(const vector<string>& words, GPSUnit* gps_unit){
-    PrintContainer(DEBUG, words);
     Print(DEBUG, "words.size=", words.size());
 
     int i = 1;
@@ -483,9 +482,9 @@ namespace gps_parser{
     if( !str_quality_indicator.empty() ){
       gps_unit->quality_indicator_ = stoi(str_quality_indicator);
       switch(gps_unit->quality_indicator_){
-        case 1: Print(INFO, "GPS fix");break;
-        case 2: Print(INFO, "DGPS fix");break;
-        default:Print(INFO, "Invalid fix quality");break;
+        case 1: Print(DEBUG, "GPS fix");break;
+        case 2: Print(DEBUG, "DGPS fix");break;
+        default:Print(DEBUG, "Invalid fix quality");break;
       }
     }
 
@@ -493,13 +492,13 @@ namespace gps_parser{
     string str_umber_of_satellites = words[i++];
     if( !str_umber_of_satellites.empty()){
       gps_unit->num_of_satellites_ = stoi(str_umber_of_satellites);
-      Print(INFO, "Satellites in use:", gps_unit->num_of_satellites_);
+      Print(DEBUG, "Satellites in use:", gps_unit->num_of_satellites_);
     }
 
     Print(DEBUG, "i==", i);
     // Horizontal Dilution of Precision (HDOP)
     string str_hdop = words[i++];
-    Print(INFO, "HDOP:", str_hdop);
+    Print(DEBUG, "HDOP:", str_hdop);
     if(!str_hdop.empty()){
       gps_unit->hdop_ = stof(str_hdop);
     }
@@ -515,7 +514,7 @@ namespace gps_parser{
     gps_unit->antenna_altitude_unit_ = words[i++];
     if( !str_altitude.empty()){
       gps_unit->antena_altitude_sea_ = stof(str_altitude);
-      Print(INFO, "Altitude: ", gps_unit->antena_altitude_sea_,
+      Print(DEBUG, "Altitude: ", gps_unit->antena_altitude_sea_,
           " ", gps_unit->antenna_altitude_unit_);
     }
 
@@ -527,7 +526,7 @@ namespace gps_parser{
     gps_unit->geoidal_separation_unit_ = words[i++];
     if(!str_geoid_sep.empty()){
       gps_unit->geoidal_separation_ = stof(str_geoid_sep);
-      Print(INFO, "Height: ", gps_unit->geoidal_separation_,
+      Print(DEBUG, "Height: ", gps_unit->geoidal_separation_,
           " ", gps_unit->geoidal_separation_unit_);
     }
 
@@ -560,8 +559,8 @@ namespace gps_parser{
     const int local_time_diff = -8;
 
     ca_time.tm_hour = (ca_time.tm_hour + 24 + local_time_diff) % 24;
-    Print(INFO, "UTC time is ", AscGpsTime(&parsed_tm));
-    Print(INFO, "CA time is ", AscGpsTime(&ca_time));
+    Print(DEBUG, "UTC time is ", AscGpsTime(&parsed_tm));
+    Print(DEBUG, "CA time is ", AscGpsTime(&ca_time));
   }
 
   void ParseLatAndLong(const string& lat, const string& longi,
@@ -588,7 +587,7 @@ namespace gps_parser{
 
       google_map_url += latitude + NE + "+" + longitude + SW;
       gps_unit->google_map_url_ = google_map_url;
-      Print(INFO, google_map_url);
+      Print(DEBUG, google_map_url);
     }
   }
 
