@@ -25,11 +25,34 @@ make
 For example:
 
 ```
-./gps_raspberry_pi {Your Device Name}
+./gps_raspberry_pi /dev/ttyUSB0
 ```
+
+Make and run shortcut
+
+```make run [PORT=?]```
+
+For example, ```make run```
+
+Or ```make run PORT=0``` for 
+
+```
+make && ./gps\_raspberry\_pi /dev/ttyUSB0
+```
+
 
 ```make tests``` to run tests.
 
-# Design
-There are 2 threads.  One receives the GPS messages and one parse the messages.
-The GPS raw message will be stored into a log file.
+# Some design logs
+GPS modlue is connected to the Raspberry Pi board through the USB port `ttyUSB?`.
+
+This program starts two threads to read and parse GPS sentenses respectively.
+
+The read thread reads the data from the USB port.  A GPS sentence always starts with '$' and end with '[CL][RF]'.  Once it receives a full sentense it will writes it to a shared pool.
+
+And the parse thread parses this sentense from thsi shared pool.
+
+Upon a successful parse, the raw message and the parsed message will be logged to the log files.  The default log dir is `./log/`.  For example, the default log file name for the raw message is './log/raw_{date}_{HH}-{HH+1}.log'.
+
+(TODO)
+There is a tool to parse the raw log file offline, and it will interact with some MAP APIs to visulize the routes.
