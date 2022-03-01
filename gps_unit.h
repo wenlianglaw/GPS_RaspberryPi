@@ -5,8 +5,8 @@
 
 using std::string;
 
-namespace gps_parser{
 
+namespace gps_parser{
 class GPSUnit{
   public:
   /* GPGGA */
@@ -56,6 +56,8 @@ class GPSUnit{
   // 020.3,E      Magnetic variation 20.3 deg East
   float magnetic_variation_;
   string magnetic_variation_EW_;
+  // 12 Positioning system mode indicator.
+  std::string mode_ind_;
 
   /* GPVTG */
   // 054.7,T Track made good
@@ -220,5 +222,4 @@ class GPSUnit{
     *this = GPSUnit();
   }
 };
-
 } // namespace gps_parser
