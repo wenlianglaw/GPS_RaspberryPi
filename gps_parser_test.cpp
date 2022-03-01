@@ -94,8 +94,30 @@ TEST(GPSPARSER_GPGSV2) {
   AssertEuqal(unit.azimuth_[2], 173);
   // sum
   AssertEuqal(unit.check_sum_, "*4D");
-
 }
+
+TEST(GPSPARSER_GPGSV3) {
+  GPSParser parser;
+  GPSUnit unit;
+  std::string test_str = "$GPGSV,4,4,13,08,02,219,*4B";
+  parser.Parse(test_str, &unit);
+
+  AssertEuqal(unit.number_of_msgs_, 4);
+  AssertEuqal(unit.msg_no_, 4);
+  AssertEuqal(unit.satellites_int_view_, 13);
+  AssertEuqal(unit.satellite_prn_.size(), 1);
+  AssertEuqal(unit.elevation_.size(), 1);
+  AssertEuqal(unit.azimuth_.size(), 1);
+  AssertEuqal(unit.snr_.size(), 0);
+  // satellite 0
+  AssertEuqal(unit.satellite_prn_[0], 8);
+  AssertEuqal(unit.elevation_[0], 2);
+  AssertEuqal(unit.azimuth_[0], 219);
+  // sum
+  AssertEuqal(unit.check_sum_, "*4B");
+}
+
+
 
 // TODO
 // Workflow test: assert no fails.
@@ -107,6 +129,7 @@ void RunTests(){
   RUN_TEST(GPSPARSER_GPGSA);
   RUN_TEST(GPSPARSER_GPGSV1);
   RUN_TEST(GPSPARSER_GPGSV2);
+  RUN_TEST(GPSPARSER_GPGSV3);
 
   if (g_test_pass) {
     std::cout<<"All GPS Parser tests passed!"<<std::endl;
