@@ -1,6 +1,6 @@
 #undef DISABLE_DEBUG_MSG
 
-#include "gps_parser.h"
+#include "../gps_parser.h"
 
 #include "testcommon.h"
 #include <iostream>
