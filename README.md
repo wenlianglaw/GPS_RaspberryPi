@@ -50,7 +50,7 @@ This program starts two threads to read and parse GPS sentenses respectively.
 
 The read thread reads the data from the USB port.  A GPS sentence always starts with '$' and end with '[CR][LF]'.  Once it receives a full sentense it will write this sentence to a shared pool.
 
-The parse thread parses this sentense from thsi shared pool.
+The parse thread parses this sentense from this shared pool.
 
 Upon a successful parse, the raw message and the parsed message will be logged to the log files.  The default log dir is `./log/`.  For example, the default log file name for the raw message is './log/raw_{date}_{HH}-{HH+1}.log'.
 
