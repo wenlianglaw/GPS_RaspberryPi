@@ -55,4 +55,4 @@ The parse thread parses this sentense from this shared pool.
 Upon a successful parse, the raw message and the parsed message will be logged to the log files.  The default log dir is `./log/`.  For example, the default log file name for the raw message is ```./log/raw_{date}_{HH}-{HH+1}.log```.
 
 (TODO)
-There is a tool to parse the raw log file offline, and it will interact with some MAP APIs to visulize the routes.
+There is a tool to parse the raw log file offline, and it will interact with some map APIs to visulize the routes.
