@@ -116,7 +116,7 @@ namespace gps_parser{
   bool GPSParser::Impl::ParseGPGSV(const std::vector<std::string>& words, GPSUnit* gps_unit) {
     Print(DEBUG, "Words.size", words.size());
 
-    if (words.size() < 9) {
+    if (words.size() < 8) {
       return false;
     }
     
