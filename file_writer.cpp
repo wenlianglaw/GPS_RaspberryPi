@@ -43,9 +43,8 @@ std::string FileWriter::GetOutputDir() {
 
 void FileWriter::Init() {
   output_dir_ = GetDefaultOutputDir();
-  raw_log_file_ = std::ofstream(GetRawLogFileName(), std::ofstream::app);
-  gps_unit_log_file_ = std::ofstream(GetGpsUnitLogFileName(),
-      std::ofstream::app);
+  UpdateRawLogFileName();
+  UpdateGpsUnitLogFileName();
   CreateOutPutDir();
 }
 
@@ -77,15 +76,27 @@ std::string FileWriter::GetLogFileSuffix() {
   return suffix;
 }
 
-std::string FileWriter::GetRawLogFileName() {
-  return output_dir_ + std::string(DEFAULT_RAW_LOG_PREFIX) + GetLogFileSuffix();
+void FileWriter::UpdateRawLogFileName() {
+  std::string filename = output_dir_ + std::string(DEFAULT_RAW_LOG_PREFIX) + GetLogFileSuffix();
+  if (filename != raw_log_file_name_) {
+    raw_log_file_name_ = filename;
+    raw_log_file_.close();
+    raw_log_file_ = std::ofstream(raw_log_file_name_, std::ofstream::app);
+  }
 }
 
-std::string FileWriter::GetGpsUnitLogFileName() {
-  return output_dir_ + std::string(DEFAULT_GPS_UNIT_LOG_PREFIX) + GetLogFileSuffix();
+void FileWriter::UpdateGpsUnitLogFileName() {
+  std::string filename = output_dir_ + std::string(DEFAULT_GPS_UNIT_LOG_PREFIX) + GetLogFileSuffix();
+  if (filename != gps_unit_log_file_name_) {
+    gps_unit_log_file_name_ = filename;
+    gps_unit_log_file_.close();
+    gps_unit_log_file_ = 
+      std::ofstream(gps_unit_log_file_name_, std::ofstream::app);
+  }
 }
 
 void FileWriter::WriteRawMessage(std::string_view msg) {
+  UpdateRawLogFileName();
   if (raw_log_file_.fail()) {
     std::cerr << "Fail to open the raw log file." << std::endl;
     return;

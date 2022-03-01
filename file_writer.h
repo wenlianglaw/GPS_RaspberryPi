@@ -28,25 +28,27 @@ class FileWriter {
     std::string GetOutputDir();
 
     // Writes the raw message to the raw log file.
-    // It calls GetRawLogFileName(...) function to get the raw log file name.
     void WriteRawMessage(std::string_view msg);
 
     // Writes the field that we are interested to the parsed log file.
-    // It calls the GetGpsUnitLogFileName(...) function to get
-    // the log file name.
     void WriteGpsUnit(GPSUnit unit);
 
   private:
     std::string output_dir_;
+
     // The raw messages go here.
+    std::string raw_log_file_name_;
     std::ofstream raw_log_file_;
+
     // The gps unit messages go here.
+    std::string gps_unit_log_file_name_;
     std::ofstream gps_unit_log_file_;
 
   private:
     std::string GetDefaultOutputDir();
-    std::string GetRawLogFileName();
-    std::string GetGpsUnitLogFileName();
+    void UpdateRawLogFileName();
+    void UpdateGpsUnitLogFileName();
+
     // Creates output dir if it doesn't exist.
     void CreateOutPutDir();
 
