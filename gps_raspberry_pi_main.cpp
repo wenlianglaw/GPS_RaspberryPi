@@ -77,12 +77,12 @@ void ParseGPS_Thread(){
       string gps_statement = gps_sentence_pool.back();
       gps_sentence_pool.pop_back();
       try{
-        Print(DEBUG, "thread:Parse sentence:", gps_statement);
+        Print(DEBUG, "thread:Parse GPS:", gps_statement);
         bool parsed = parser.Parse(gps_statement, &gps_unit);
         if (parsed) {
           file_writer.WriteRawMessage(gps_statement);
         } else {
-          Print(INFO, "Not parsed", gps_statement);
+          Print(ERROR, "Not parsed ", gps_statement);
         }
       } catch(...){
         std::cerr << "Failed to parse a GPS message. Will continue."  << std::endl;
