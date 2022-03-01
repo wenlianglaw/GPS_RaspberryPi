@@ -66,7 +66,7 @@ std::string FileWriter::GetLogFileSuffix() {
 
   std::strftime(str_hour, 4, "%H", &tm);
   current_hour = std::stoi(std::string(str_hour));
-  next_hour = (current_hour + 1) % 24;
+  next_hour = (current_hour + 1) % 25;
 
   std::strftime(date, 32, "%Y%m%d", &tm);
 
