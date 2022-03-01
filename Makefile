@@ -11,6 +11,8 @@ SRC_FILES= gps_parser.cpp \
 					 util.cpp \
 					 file_writer.cpp
 
+TEST_FOLDER= ./tests
+
 OBJ=	$(patsubst %.cpp,%.o,$(SRC_FILES))
 
 all:	main 
@@ -29,14 +31,14 @@ run:
 	make && ./gps_raspberry_pi /dev/ttyUSB$(PORT)
 
 # Tests
-gps_parser_test: gps_parser.o util.o
-	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
+gps_parser_test:	gps_parser.o util.o
+	$(CC) $(TEST_FOLDER)/$@.cpp $^ -o $@ $(CFLAGS)
 	./$@
 
-util_test: util.o
-	$(CC) $@.cpp $^ -o $@ $(CFLAGS)
+util_test:	util.o
+	$(CC) $(TEST_FOLDER)/$@.cpp $^ -o $@ $(CFLAGS)
 	./$@
 
 tests:	gps_parser_test util_test
 
-.PHONY:	util_test gps_parser_test main run
+.PHONY:	util_test gps_parser_test main
