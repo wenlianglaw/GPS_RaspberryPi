@@ -15,35 +15,64 @@ using std::string;
 using std::vector;
 
 namespace gps_parser{
-  static void ParseGPGSA(const std::vector<std::string>& words, GPSUnit* gps_unit);
-  static void ParseGPVTG(const std::vector<std::string>& words, GPSUnit* gps_unit);
-  static void ParseGPRMC(const std::vector<std::string>& words, GPSUnit* gps_unit);
-  static void ParseGPGGA(const std::vector<std::string>& words, GPSUnit* gps_unit);
-  static void ParseGPGSV(const std::vector<std::string>& words, GPSUnit* gps_unit);
-  static void ParseGpsTime(const std::string& time);
-  static void ParseLatAndLong(const std::string& lat, const std::string& longi,
-      const std::string& NE, const std::string& SW,
-      GPSUnit* gps_unit);
 
-  void Parse(const string& gps_msg, GPSUnit* gps_unit){
-    Print(INFO, gps_msg);
-    auto words = StrSplit(gps_msg, ",");
-    if( StartWith(gps_msg, "$GPVTG") ){
-      ParseGPVTG(words, gps_unit);
-    } else if( StartWith(gps_msg, "$GPRMC") ) {
-      ParseGPRMC(words, gps_unit);
-    } else if( StartWith(gps_msg, "$GPGSA") ) {
-      ParseGPGSA(words, gps_unit);
-    } else if( StartWith(gps_msg, "$GPGGA") ){
-      ParseGPGGA(words, gps_unit);
-    } else if( StartWith(gps_msg, "$GPGSV") ){
-      ParseGPGSV(words, gps_unit);
-    } else{
-      Print(ERROR,"-----------------------------");
-      Print(ERROR, "A GPS sentence that cannot parse. Skipped.");
-      Print(ERROR, gps_msg);
-      Print(ERROR,"-----------------------------");
-    }
+  class GPSParser::Impl {
+    public:
+      /**************** IMPORTANT ****************/
+      // This fix vlaue is the multipler used on the attitude and longitude.
+      // This depends on the GPS module.
+      // Mine needs this mutiplier.
+      float fix = 1.6667;
+
+    public:
+      bool Parse(const string& gps_msg, GPSUnit* gps_unit); 
+
+    private:
+      bool ParseGPGSA(const std::vector<std::string>& words, GPSUnit* gps_unit);
+      bool ParseGPVTG(const std::vector<std::string>& words, GPSUnit* gps_unit);
+      bool ParseGPRMC(const std::vector<std::string>& words, GPSUnit* gps_unit);
+      bool ParseGPGGA(const std::vector<std::string>& words, GPSUnit* gps_unit);
+      bool ParseGPGSV(const std::vector<std::string>& words, GPSUnit* gps_unit);
+      void ParseGpsTime(const std::string& time);
+      void ParseLatAndLong(const std::string& lat, const std::string& longi,
+          const std::string& NE, const std::string& SW,
+          GPSUnit* gps_unit);
+  };
+
+  bool GPSParser::Parse(const string& gps_msg, GPSUnit* gps_unit){
+    return pimpl_->Parse(gps_msg, gps_unit);
+  }
+
+  GPSParser::GPSParser(): pimpl_(std::make_unique<Impl>()) {}
+  GPSParser::~GPSParser() = default;
+
+
+  bool GPSParser::Impl::Parse(const string& gps_msg, GPSUnit* gps_unit){
+        Print(INFO, gps_msg);
+        auto words = StrSplit(gps_msg, ",");
+        bool parsed = false;
+
+        if( StartWith(gps_msg, "$GPVTG") ){
+          parsed =  ParseGPVTG(words, gps_unit);
+        } else if( StartWith(gps_msg, "$GPRMC") ) {
+          parsed =  ParseGPRMC(words, gps_unit);
+        } else if( StartWith(gps_msg, "$GPGSA") ) {
+          parsed =  ParseGPGSA(words, gps_unit);
+        } else if( StartWith(gps_msg, "$GPGGA") ){
+          parsed =  ParseGPGGA(words, gps_unit);
+        } else if( StartWith(gps_msg, "$GPGSV") ){
+          parsed =  ParseGPGSV(words, gps_unit);
+        } else{
+          Print(ERROR,"-----------------------------");
+          Print(ERROR, "A GPS sentence that cannot parse. Skipped.");
+          Print(ERROR, gps_msg);
+          Print(ERROR,"-----------------------------");
+          parsed =  false;
+        }
+        if (!parsed) {
+          Print(INFO, "The above message cannot be parsed.");
+        }
+        return parsed;
   }
 
   /*
@@ -89,29 +118,33 @@ namespace gps_parser{
     | variable | [CR][LF]  | Sentence terinator                                        |
     |----------+-----------+-----------------------------------------------------------|
    */
-  void ParseGPGSV(const std::vector<std::string>& words, GPSUnit* gps_unit) {
+  bool GPSParser::Impl::ParseGPGSV(const std::vector<std::string>& words, GPSUnit* gps_unit) {
     Print(DEBUG, "Words.size", words.size());
+
+    if (words.size() < 9) {
+      return false;
+    }
     
-    int i = 1;
-    // 2 number of msgs
+    size_t i = 1;
+    // 1 number of msgs
     std::string number_of_msgs = words[i++];
     if (number_of_msgs.empty()) {
       Print(WARNING, "No message found in GPGSV.");
       PrintContainer(WARNING, words);
-      return;
+      return false;
     }
     gps_unit->number_of_msgs_ = std::stoi(number_of_msgs);
 
-    // 3 msg number
+    // 2 msg number
     std::string msg_no = words[i++];
     if (msg_no.empty()) {
       Print(WARNING, "No message found in GPGSV.");
       PrintContainer(WARNING, words);
-      return;
+      return false;
     }
     gps_unit->msg_no_ = std::stoi(msg_no);
 
-    // 4 sats in view
+    // 3 sats in view
       std::string sat_in_view = words[i++];
       if (!sat_in_view.empty()) {
         gps_unit->satellites_int_view_ = std::stoi(sat_in_view);
@@ -119,7 +152,7 @@ namespace gps_parser{
 
     // The last word is sys id and checksum.  Previous are all satellites.
     while (i<=words.size()-1) {
-      // 5 prn
+      // 4 prn
       std::string prn = words[i++];
       if (!prn.empty()) {
         gps_unit->satellite_prn_.push_back(std::stoi(prn));
@@ -128,7 +161,7 @@ namespace gps_parser{
         break;
       }
 
-      // 6: elev
+      // 5: elev
       std::string elev = words[i++];
       if (!elev.empty()) {
         gps_unit->elevation_.push_back(std::stoi(elev));
@@ -137,7 +170,7 @@ namespace gps_parser{
         break;
       }
 
-      // 7: azimuth
+      // 6: azimuth
       std::string azimuth = words[i++];
       if (!azimuth.empty()) {
         gps_unit->azimuth_.push_back(std::stoi(azimuth));
@@ -146,7 +179,7 @@ namespace gps_parser{
         break;
       }
       
-      // 8: SNR
+      // 7: SNR
       std::string snr = words[i++];
       if (!snr.empty()) {
         gps_unit->snr_.push_back(std::stoi(snr));
@@ -155,6 +188,9 @@ namespace gps_parser{
 
     // Last: (snr or system ID) and check sum
     std::vector<string> sum = StrSplit(words[i++], "*");
+    if (sum.size() < 2){
+      return false;
+    }
     if (gps_unit->snr_.size() != gps_unit->azimuth_.size()) {
       if (!sum[0].empty()) {
         gps_unit->snr_.push_back(std::stoi(sum[0]));
@@ -163,6 +199,8 @@ namespace gps_parser{
       gps_unit->system_id_ = sum[0];
     }
     gps_unit->check_sum_ = "*" + sum[1];
+
+    return true;
   }
 
   /*
@@ -184,49 +222,40 @@ namespace gps_parser{
    *   16   = HDOP
    *   17   = VDOP & CheckSum
    */
-  void ParseGPGSA(const vector<string>& words, GPSUnit* gps_unit){
-    Print(DEBUG, "words.size:", words.size());
-    int i=1;
+  bool GPSParser::Impl::ParseGPGSA(const vector<string>& words, GPSUnit* gps_unit){
+    if (words.size() < 18) {
+      return false;
+    }
+
     // 1    = Mode:
-    gps_unit->manual_auto_mode_ = words[i++];
+    gps_unit->manual_auto_mode_ = words[1];
 
     // 2    = Mode:
-    const string& str_mode_2d_3d = words[i++];
+    const string& str_mode_2d_3d = words[2];
     if(!str_mode_2d_3d.empty()){
       gps_unit->mode_2d_3d_ = stoi(str_mode_2d_3d);
     }
 
     // 15   = PDOP
-    i = 15;
-    const string& str_pdop = words[i++];
+    const string& str_pdop = words[15];
     if(!str_pdop.empty()){
       gps_unit->pdop_ = stof(str_pdop);
     }
-    Print(DEBUG, "i=", i);
 
     // 16   = HDOP
-    const string& str_hdop = words[i++];
+    const string& str_hdop = words[16];
     if(!str_hdop.empty()){
       gps_unit->hdop_ = stof(str_hdop);
     }
 
     // 17   = VDOP & CheckSum
-    Print(DEBUG, "i=", i);
-    const string& str_vdop_checksum = words[i++];
-    string check_sum; 
-    string str_vdop;
-    size_t split = str_vdop_checksum.find("*");
-    str_vdop = str_vdop_checksum.substr(0,split);
-    check_sum = str_vdop_checksum.substr(split);
-    gps_unit->check_sum_ = check_sum;
-
-    Print(DEBUG, "vdop=",str_vdop);
-    Print(DEBUG, "check_sum=",check_sum);
-
-    if(!str_vdop.empty()){
-      gps_unit->vdop_ = stof(str_vdop);
+    std::string str_vdop_checksum = words[17];
+    auto split = ::StrSplit(str_vdop_checksum, "*");
+    gps_unit->vdop_ = stof(split[0]);
+    if (split.size() > 1){
+      gps_unit->check_sum_ = "*" + split[1];
     }
-    Print(DEBUG, "i=", i);
+    return true;
   }
 
   /*
@@ -258,39 +287,46 @@ namespace gps_parser{
    *     x.x,N = Speed, knots
    *     x.x,K = Speed, Km/hr
    */
-  void ParseGPVTG(const vector<string>& words, GPSUnit* gps_unit){
-    int i=1;
+  bool GPSParser::Impl::ParseGPVTG(const vector<string>& words, GPSUnit* gps_unit){
+    if (words.size() < 9) {
+      return false;
+    }
+
     // 1    = Track made good
-    const string& str_track_made_good = words[i++];
+    const string& str_track_made_good = words[1];
     if(!str_track_made_good.empty()){
       gps_unit->track_made_good_ = stof(str_track_made_good);
     }
     // 2   = Fixed text 'T' indicates that track made good is relative to true north
-    gps_unit->track_made_good_t_ = words[i++];
+    gps_unit->track_made_good_t_ = words[2];
 
     // 3    = not used
-    i++;
     // 4    = not used
-    i++;
-
     // 5    = Speed over ground in knots
-    const string& str_speed_over_ground_kt = words[i++];
+    const string& str_speed_over_ground_kt = words[5];
     if(!str_speed_over_ground_kt.empty()){
       gps_unit->speed_over_ground_knots_ = stof(str_speed_over_ground_kt);
     }
     // 6    = Fixed text 'N' indicates that speed over ground in in knots
-    gps_unit->speed_over_ground_knots_unit_ = words[i++];
+    gps_unit->speed_over_ground_knots_unit_ = words[6];
 
     // 7    = Speed over ground in kilometers/hour
-    const string& str_speed_over_ground_km = words[i++];
+    const string& str_speed_over_ground_km = words[7];
     if(!str_speed_over_ground_km.empty()){
       gps_unit->speed_over_ground_kmh_ = stof(str_speed_over_ground_km);
     }
     // 8    = Fixed text 'K' indicates that speed over ground is in kilometers/hour
-    gps_unit->speed_over_ground_kmh_unit_ = words[i++];
+    std::string check_sum = words[8];
+    auto check_sum_split = ::StrSplit(check_sum, "*");
+
+    gps_unit->speed_over_ground_kmh_unit_ = check_sum_split[0];
 
     // 9    = Checksum
-    gps_unit->check_sum_ = words[i++];
+    if (check_sum_split.size() > 1){
+      gps_unit->check_sum_ = "*" + check_sum_split[1];
+    }
+
+    return true;
   }
 
   /*
@@ -315,20 +351,6 @@ namespace gps_parser{
    1    2    3    4    5     6    7    8      9     10  11 12
 
 
-   1   220516     Time Stamp
-   2   A          validity - A-ok, V-invalid
-   3   5133.82    current Latitude
-   4   N          North/South
-   5   00042.24   current Longitude
-   6   W          East/West
-   7   173.8      Speed in knots
-   8   231.8      True course
-   9   130694     Date Stamp
-   10  004.2      Variation
-   11  W          East/West
-   12  *70        checksum
-
-
    eg4. $GPRMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,ddmmyy,x.x,a*hh
    1    = UTC of position fix
    2    = Data status (V=navigation receiver warning)
@@ -338,19 +360,23 @@ namespace gps_parser{
    6    = E or W
    7    = Speed over ground in knots
    8    = Track made good in degrees True
-   9    = UT date
+   9    = UTC date
    10   = Magnetic variation degrees (Easterly var. subtracts from true course)
    11   = E or W
-   12   = Checksum
+   12   = Positioning system mode indicator.
+   13   = Checksum *xx
    */
-  void ParseGPRMC(const vector<string>& words, GPSUnit* gps_unit){
-    int i=1;
-    // Time
-    string gps_time = words[i++];
+  bool GPSParser::Impl::ParseGPRMC(const vector<string>& words, GPSUnit* gps_unit){
+    if (words.size() < 13) {
+      return false;
+    }
+
+    // 1 Time
+    string gps_time = words[1];
     ParseGpsTime(gps_time);
 
-    // Navigation receiver warning 
-    gps_unit->nav_receiver_warning_ = words[i++];
+    // 2. Navigation receiver warning 
+    gps_unit->nav_receiver_warning_ = words[2];
     string nav_receiver_warning = gps_unit->nav_receiver_warning_;
     if( !nav_receiver_warning.empty() ){
       if(nav_receiver_warning == "V"){
@@ -358,29 +384,29 @@ namespace gps_parser{
       }
     }
 
-    // Lat, long
-    string lat = words[i++],
-    ne = words[i++],
-    longi = words[i++],
-    sw = words[i++];
+    // 3. Lat, long
+    string lat = words[3],
+    ne = words[4],
+    longi = words[5],
+    sw = words[6];
     ParseLatAndLong(lat, longi, ne, sw, gps_unit);
 
-    // Speed over ground, Knots
-    string str_speed_over_ground = words[i++];
+    // 7. Speed over ground, Knots
+    string str_speed_over_ground = words[7];
     if(!str_speed_over_ground.empty()){
       gps_unit->speed_over_ground_knots_ = stof(str_speed_over_ground);
       Print(DEBUG, "Current Speed is:", gps_unit->speed_over_ground_knots_, "knots");
     }
 
-    // Course Made Good, True
-    string str_cmg = words[i++];
+    // 8. Course Made Good, True
+    string str_cmg = words[8];
     if(!str_cmg.empty()){
       gps_unit->course_made_good_ = stof(str_cmg);
       Print(DEBUG, "Course Made Good is:", gps_unit->course_made_good_ , "degree");
     }
 
-    // 191194       Date of fix  19 November 1994
-    gps_unit->date_ = words[i++];
+    // 9. 191194       Date of fix  19 November 1994
+    gps_unit->date_ = words[9];
     string date = gps_unit->date_;
     if(!date.empty()){
       int day = stoi(date.substr(0,2));
@@ -389,18 +415,25 @@ namespace gps_parser{
       Print(DEBUG, "Gps date:", day, " ", month, " ", year + 2000);
     }
 
-    // 020.3,E      Magnetic variation 20.3 deg East
-    string str_magnetic_variation = words[i++];
+    // 10. 020.3,E      Magnetic variation 20.3 deg East
+    string str_magnetic_variation = words[10];
     if(!str_magnetic_variation.empty()){
       gps_unit->magnetic_variation_ = stof(str_magnetic_variation);
     }
-    gps_unit->magnetic_variation_EW_ = words[i++];
 
-    // *68          mandatory checksum
-    string check_sum = words[i];
-    if( check_sum[0] == 'E' || check_sum[0] == 'W' )
-      gps_unit->magnetic_variation_EW_ = check_sum[0];
-    gps_unit->check_sum_ = check_sum;
+    // 11. E or W
+    gps_unit->magnetic_variation_EW_ = words[11];
+
+    // 12.  mode ind and checksum
+    // *68 mandatory checksum
+    string check_sum = words[12];
+    auto check_sum_split = ::StrSplit(check_sum, "*");
+    gps_unit->mode_ind_ = check_sum_split[0];
+
+    if (check_sum_split.size() > 1) {
+      gps_unit->check_sum_ = "*" + check_sum_split[1];
+    }
+    return true;
   }
 
   /*
@@ -462,23 +495,26 @@ namespace gps_parser{
      14   = Diff. reference station ID#
      15   = Checksum
      */
-  void ParseGPGGA(const vector<string>& words, GPSUnit* gps_unit){
+  bool GPSParser::Impl::ParseGPGGA(const vector<string>& words, GPSUnit* gps_unit){
     Print(DEBUG, "words.size=", words.size());
 
-    int i = 1;
+    if (words.size() < 15) {
+      return false;
+    }
+
     // i = 1 Time
-    string gps_time = words[i++];
+    string gps_time = words[1];
     ParseGpsTime(gps_time);
 
     // Latitude, longitude
-    string latitude = words[i++], ne = words[i++];
-    string longitude = words[i++], sw = words[i++];
+    string latitude = words[2], ne = words[3];
+    string longitude = words[4], sw = words[5];
 
     // i = 6 fix quailty
     // 0 = INVALID
     // 1 = GPS fix
     // 2 = DGPS fix
-    string str_quality_indicator = words[i++];
+    string str_quality_indicator = words[6];
     if( !str_quality_indicator.empty() ){
       gps_unit->quality_indicator_ = stoi(str_quality_indicator);
       switch(gps_unit->quality_indicator_){
@@ -488,69 +524,62 @@ namespace gps_parser{
       }
     }
 
-    // number of satellites
-    string str_umber_of_satellites = words[i++];
+    // 7. number of satellites
+    string str_umber_of_satellites = words[7];
     if( !str_umber_of_satellites.empty()){
       gps_unit->num_of_satellites_ = stoi(str_umber_of_satellites);
       Print(DEBUG, "Satellites in use:", gps_unit->num_of_satellites_);
     }
 
-    Print(DEBUG, "i==", i);
-    // Horizontal Dilution of Precision (HDOP)
-    string str_hdop = words[i++];
+    // 8. Horizontal Dilution of Precision (HDOP)
+    string str_hdop = words[8];
     Print(DEBUG, "HDOP:", str_hdop);
     if(!str_hdop.empty()){
       gps_unit->hdop_ = stof(str_hdop);
     }
-    Print(DEBUG, "i==", i);
     if( !latitude.empty() && !longitude.empty() &&
         !ne.empty() && !sw.empty()){
       ParseLatAndLong(latitude, longitude, ne, sw, gps_unit); 
     }
 
-    // i = 9. Altitude
-    string str_altitude = words[i++];
-    // i = 10. Altitude unit
-    gps_unit->antenna_altitude_unit_ = words[i++];
+    // 9. Altitude
+    string str_altitude = words[9];
+    // 10. Altitude unit
+    gps_unit->antenna_altitude_unit_ = words[10];
     if( !str_altitude.empty()){
       gps_unit->antena_altitude_sea_ = stof(str_altitude);
       Print(DEBUG, "Altitude: ", gps_unit->antena_altitude_sea_,
           " ", gps_unit->antenna_altitude_unit_);
     }
 
-
-    Print(DEBUG, "i==", i);
-    // i = 11. Height of geoid above WGS85 ellipsoid
-    string str_geoid_sep = words[i++];
-    // i = 12. 11's unit
-    gps_unit->geoidal_separation_unit_ = words[i++];
+    // 11. Height of geoid above WGS85 ellipsoid
+    string str_geoid_sep = words[11];
+    // 12. 11's unit
+    gps_unit->geoidal_separation_unit_ = words[12];
     if(!str_geoid_sep.empty()){
       gps_unit->geoidal_separation_ = stof(str_geoid_sep);
       Print(DEBUG, "Height: ", gps_unit->geoidal_separation_,
           " ", gps_unit->geoidal_separation_unit_);
     }
 
-    Print(DEBUG, "i==", i);
-    // i = 13.  Time since last DGPS update
-    string str_time_since_last_dgps_update = words[i++];
+    // 13.  Time since last DGPS update
+    string str_time_since_last_dgps_update = words[13];
     if(!str_time_since_last_dgps_update.empty()){
       gps_unit->seconds_since_last_diff_ = stof(str_time_since_last_dgps_update);
     }
-    Print(DEBUG, "i==", i);
 
-    // DGPS reference station id and DGPS ref.statio.id  format x.x
-    if( i < (int)words.size()-1){
-      gps_unit->diff_ref_station_id_ = words[i++];
-    }
+    // 14. DGPS reference station id and DGPS ref.statio.id  format x.x
+    // and check sum
+    auto dgps_checksum_split = StrSplit(words[14], "*");
+    gps_unit->diff_ref_station_id_ = dgps_checksum_split[0];
 
-    // i = 14 Check sum
-    if( i < (int)words.size()-1 ){
-      gps_unit->check_sum_ = words[i++];
-      Print(DEBUG, "i==", i);
+    if (dgps_checksum_split.size() > 1){
+      gps_unit->check_sum_ = "*" + dgps_checksum_split[1];
     }
+    return true;
   }
 
-  void ParseGpsTime(const string& time){
+  void GPSParser::Impl::ParseGpsTime(const string& time){
     string gps_time = time;
     struct tm parsed_tm;
     strptime(gps_time.c_str(), "%H%M%S", &parsed_tm);
@@ -563,7 +592,7 @@ namespace gps_parser{
     Print(DEBUG, "CA time is ", AscGpsTime(&ca_time));
   }
 
-  void ParseLatAndLong(const string& lat, const string& longi,
+  void GPSParser::Impl::ParseLatAndLong(const string& lat, const string& longi,
       const string& NE, const string& SW,
       GPSUnit* gps_unit){
     string latitude = lat, longitude = longi;
@@ -573,7 +602,7 @@ namespace gps_parser{
       latitude.insert(dot_pos-2,".");
       latitude.erase(dot_pos+1,1);
       auto words = StrSplit(latitude, ".");
-      words[1] = std::to_string((int)(stoi(words[1])*gps_parser::fix));
+      words[1] = std::to_string((int)(stoi(words[1])*fix));
       latitude = words[0] + "." + words[1];
       gps_unit->latitude_ = stof(latitude);
 
@@ -581,7 +610,7 @@ namespace gps_parser{
       longitude.insert(dot_pos-2,".");
       longitude.erase(dot_pos+1,1);
       words = StrSplit(longitude, ".");
-      words[1] = std::to_string((int)(stoi(words[1])*gps_parser::fix));
+      words[1] = std::to_string((int)(stoi(words[1])*fix));
       longitude = words[0] + "." + words[1];
       gps_unit->longitutde_ = stof(longitude);
 
