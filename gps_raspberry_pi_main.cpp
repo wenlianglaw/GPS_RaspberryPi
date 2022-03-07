@@ -85,7 +85,7 @@ void ParseGPS_Thread(){
           Print(ERROR, "Not parsed ", gps_statement);
         }
       } catch(...){
-        std::cerr << "Failed to parse a GPS message. Will continue."  << std::endl;
+        Print(ERROR, "Failed to parse a GPS message.", gps_statement, "Will continue.");
       }
     }
   }
