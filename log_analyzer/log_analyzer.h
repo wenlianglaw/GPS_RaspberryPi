@@ -40,6 +40,8 @@ class LogAnalyzer {
 
   void WriteMessageToFile(std::string_view raw_message,
                           std::string_view filename);
+
+  std::string GetAnalyzeFileName(std::string_view source_filename);
 };
 
 }  // namespace gps_parser

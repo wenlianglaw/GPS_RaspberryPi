@@ -30,4 +30,8 @@ void LogAnalyzer::AnalyzeAFile(std::string_view filename) {
   }
 }
 
+std::string LogAnalyzer::GetAnalyzeFileName(std::string_view source_filename) {
+
+}
+
 }  // namespace gps_parser
