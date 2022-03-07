@@ -2,28 +2,30 @@
 
 #include "../gps_parser.h"
 
-#include "testcommon.h"
 #include <iostream>
 
-using gps_parser::GPSUnit;
+#include "testcommon.h"
+
 using gps_parser::GPSParser;
+using gps_parser::GPSUnit;
 
 int g_test_pass = true;
 
-template  <typename T, typename U>
+template <typename T, typename U>
 void AssertEuqal(T a, U b) {
-  if (a!=b) {
+  if (a != b) {
     std::cout << "***Test failed: " << a << "!= " << b << std::endl;
     g_test_pass = false;
   }
 }
 
-
 // Workflow test: assert no fails.
-TEST(GPSPARSER_GPGGA){
+TEST(GPSPARSER_GPGGA) {
   GPSParser parser;
   GPSUnit gps_unit;
-  std::string test_str = "$GPGGA,134658.00,5106.9792,N,11402.3003,W,2,09,1.0,1048.47,M,-16.27,M,08,AAAA*60";
+  std::string test_str =
+      "$GPGGA,134658.00,5106.9792,N,11402.3003,W,2,09,1.0,1048.47,M,-16.27,M,"
+      "08,AAAA*60";
   parser.Parse(test_str, &gps_unit);
 }
 
@@ -31,7 +33,8 @@ TEST(GPSPARSER_GPGSV1) {
   GPSParser parser;
   GPSUnit unit;
 
-  std::string test_str = "$GPGSV,3,1,11,18,87,050,48,22,56,250,49,21,55,122,49,03,40,284,47*78";
+  std::string test_str =
+      "$GPGSV,3,1,11,18,87,050,48,22,56,250,49,21,55,122,49,03,40,284,47*78";
   parser.Parse(test_str, &unit);
   AssertEuqal(unit.number_of_msgs_, 3);
   AssertEuqal(unit.msg_no_, 1);
@@ -64,11 +67,11 @@ TEST(GPSPARSER_GPGSV1) {
   AssertEuqal(unit.check_sum_, "*78");
 }
 
-
 TEST(GPSPARSER_GPGSV2) {
   GPSParser parser;
   GPSUnit unit;
-  std::string test_str = "$GPGSV,3,3,11,09,15,107,44,14,11,196,41,07,03,173,*4D";
+  std::string test_str =
+      "$GPGSV,3,3,11,09,15,107,44,14,11,196,41,07,03,173,*4D";
   parser.Parse(test_str, &unit);
 
   AssertEuqal(unit.number_of_msgs_, 3);
@@ -117,14 +120,11 @@ TEST(GPSPARSER_GPGSV3) {
   AssertEuqal(unit.check_sum_, "*4B");
 }
 
-
-
 // TODO
 // Workflow test: assert no fails.
-TEST(GPSPARSER_GPGSA){
-}
+TEST(GPSPARSER_GPGSA) {}
 
-void RunTests(){
+void RunTests() {
   RUN_TEST(GPSPARSER_GPGGA);
   RUN_TEST(GPSPARSER_GPGSA);
   RUN_TEST(GPSPARSER_GPGSV1);
@@ -132,14 +132,13 @@ void RunTests(){
   RUN_TEST(GPSPARSER_GPGSV3);
 
   if (g_test_pass) {
-    std::cout<<"All GPS Parser tests passed!"<<std::endl;
+    std::cout << "All GPS Parser tests passed!" << std::endl;
   } else {
-    std::cout<<"GPS Parser tests failed!  See details above."<<std::endl;
+    std::cout << "GPS Parser tests failed!  See details above." << std::endl;
   }
 }
 
-
-int main(){
+int main() {
   RunTests();
   return 0;
 }

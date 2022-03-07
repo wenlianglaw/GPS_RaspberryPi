@@ -5,10 +5,9 @@
 
 using std::string;
 
-
-namespace gps_parser{
-class GPSUnit{
-  public:
+namespace gps_parser {
+class GPSUnit {
+ public:
   /* GPGGA */
   float latitude_;
   string NS_;
@@ -65,7 +64,7 @@ class GPSUnit{
   string track_made_good_t_;
 
   /* GPGSA */
-  /* 
+  /*
    *   1   ;
    *     M=Manual, forced to operate in 2D or 3D
    *     A=Automatic, 3D/2D
@@ -96,7 +95,7 @@ class GPSUnit{
   int msg_no_ = 1;
   // symbol xx
   int satellites_int_view_ = 0;
-  
+
   // symbol xx
   // Satellite PRN number
   // GPS = 1 to 32
@@ -106,13 +105,13 @@ class GPSUnit{
   // QZSS = 1 to 10
   // SBAS = 33 to 64 (add 87 for PRN#s)
   // GLONASS = 65 to 96 1
-  // 
+  //
   // Satellite i's prn number.
   std::vector<int> satellite_prn_;
 
   // symbol xx
   // Elevation, degrees, 90 maximum
-  // 
+  //
   // Satellite i's elevation.
   std::vector<int> elevation_;
 
@@ -138,9 +137,8 @@ class GPSUnit{
   // symbol *hh
   std::string check_sum_;
 
-
   /*********** Constructor *************/
-  GPSUnit(){
+  GPSUnit() {
     /* GPGGA */
     latitude_ = 0.0f;
     NS_ = "N";
@@ -195,7 +193,7 @@ class GPSUnit{
     track_made_good_t_ = "T";
 
     /* GPGSA */
-    /* 
+    /*
      *   1    = Mode:
      *     M=Manual, forced to operate in 2D or 3D
      *     A=Automatic, 3D/2D
@@ -218,8 +216,6 @@ class GPSUnit{
     vdop_ = 0.0f;
   }
 
-  void Clear(){
-    *this = GPSUnit();
-  }
+  void Clear() { *this = GPSUnit(); }
 };
-} // namespace gps_parser
+}  // namespace gps_parser

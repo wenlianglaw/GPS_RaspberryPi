@@ -1,25 +1,21 @@
 #include "file_writer.h"
 
+#include <chrono>
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <string_view>
-#include <chrono>
-#include <ctime>
-#include <filesystem>
 
 namespace fs = std::filesystem;
 
 namespace gps_parser {
 
-  static constexpr char DEFAULT_OUTPUT_DIR[] = "./log/";
-  static constexpr char DEFAULT_RAW_LOG_PREFIX[] = "raw";
+static constexpr char DEFAULT_OUTPUT_DIR[] = "./log/";
+static constexpr char DEFAULT_RAW_LOG_PREFIX[] = "raw";
 
-
-FileWriter::FileWriter() {
-      Init();
-}
+FileWriter::FileWriter() { Init(); }
 
 FileWriter::~FileWriter() {
   if (raw_log_file_.is_open()) {
@@ -32,9 +28,7 @@ void FileWriter::ChangeOutputDir(std::string_view new_dir) {
   CreateOutPutDir();
 }
 
-std::string FileWriter::GetOutputDir() {
-  return output_dir_;
-}
+std::string FileWriter::GetOutputDir() { return output_dir_; }
 
 void FileWriter::Init() {
   output_dir_ = GetDefaultOutputDir();
@@ -42,9 +36,7 @@ void FileWriter::Init() {
   CreateOutPutDir();
 }
 
-std::string FileWriter::GetDefaultOutputDir() {
-  return DEFAULT_OUTPUT_DIR;
-}
+std::string FileWriter::GetDefaultOutputDir() { return DEFAULT_OUTPUT_DIR; }
 
 std::string FileWriter::GetLogFileSuffix() {
   // Gets the time objects.
@@ -65,13 +57,15 @@ std::string FileWriter::GetLogFileSuffix() {
   std::strftime(date, 32, "%Y%m%d", &tm);
 
   std::string suffix = "_" + std::string(date) + "_" +
-    std::to_string(current_hour) + "-" + std::to_string(next_hour) + ".log";
+                       std::to_string(current_hour) + "-" +
+                       std::to_string(next_hour) + ".log";
 
   return suffix;
 }
 
 void FileWriter::UpdateRawLogFileName() {
-  std::string filename = output_dir_ + std::string(DEFAULT_RAW_LOG_PREFIX) + GetLogFileSuffix();
+  std::string filename =
+      output_dir_ + std::string(DEFAULT_RAW_LOG_PREFIX) + GetLogFileSuffix();
   if (filename != raw_log_file_name_) {
     raw_log_file_name_ = filename;
     raw_log_file_.close();
@@ -90,12 +84,11 @@ void FileWriter::WriteRawMessage(std::string_view msg) {
 }
 
 void FileWriter::CreateOutPutDir() {
-  if (!fs::exists(output_dir_)){
+  if (!fs::exists(output_dir_)) {
     fs::create_directories(output_dir_);
   }
-  fs::permissions(output_dir_, 
-      fs::perms::owner_all | fs::perms::group_all,
-      fs::perm_options::add);
+  fs::permissions(output_dir_, fs::perms::owner_all | fs::perms::group_all,
+                  fs::perm_options::add);
 }
 
 }  // namespace gps_parser
