@@ -1,13 +1,14 @@
 #include "log_analyzer.h"
+
 #include <filesystem>
+
+#include "../gps_parser.h"
 
 namespace fs = std::filesystem;
 
-namespace gps_parser{
-
+namespace gps_parser {
 
 void LogAnalyzer::Analyze(std::string_view dir_or_file) {
-
   if (fs::is_directory(dir_or_file)) {
     AnalyzeADir(dir_or_file);
   }
