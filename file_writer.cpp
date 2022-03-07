@@ -15,7 +15,6 @@ namespace gps_parser {
 
   static constexpr char DEFAULT_OUTPUT_DIR[] = "./log/";
   static constexpr char DEFAULT_RAW_LOG_PREFIX[] = "raw";
-  static constexpr char DEFAULT_GPS_UNIT_LOG_PREFIX[] = "gps_unit";
 
 
 FileWriter::FileWriter() {
@@ -25,10 +24,6 @@ FileWriter::FileWriter() {
 FileWriter::~FileWriter() {
   if (raw_log_file_.is_open()) {
     raw_log_file_.close();
-  }
-
-  if (gps_unit_log_file_.is_open()) {
-    gps_unit_log_file_.close();
   }
 }
 
@@ -44,7 +39,6 @@ std::string FileWriter::GetOutputDir() {
 void FileWriter::Init() {
   output_dir_ = GetDefaultOutputDir();
   UpdateRawLogFileName();
-  UpdateGpsUnitLogFileName();
   CreateOutPutDir();
 }
 
@@ -85,16 +79,6 @@ void FileWriter::UpdateRawLogFileName() {
   }
 }
 
-void FileWriter::UpdateGpsUnitLogFileName() {
-  std::string filename = output_dir_ + std::string(DEFAULT_GPS_UNIT_LOG_PREFIX) + GetLogFileSuffix();
-  if (filename != gps_unit_log_file_name_) {
-    gps_unit_log_file_name_ = filename;
-    gps_unit_log_file_.close();
-    gps_unit_log_file_ = 
-      std::ofstream(gps_unit_log_file_name_, std::ofstream::app);
-  }
-}
-
 void FileWriter::WriteRawMessage(std::string_view msg) {
   UpdateRawLogFileName();
   if (raw_log_file_.fail()) {
@@ -103,10 +87,6 @@ void FileWriter::WriteRawMessage(std::string_view msg) {
   }
   msg.remove_suffix(msg.size() - msg.find_last_of(13));
   raw_log_file_ << msg << std::endl;
-}
-
-void FileWriter::WriteGpsUnit(GPSUnit unit) {
-  std::cerr << "Unimplemented." << std::endl;
 }
 
 void FileWriter::CreateOutPutDir() {
