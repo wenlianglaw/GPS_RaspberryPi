@@ -1,12 +1,11 @@
 #include <string>
 #include <string_view>
-#include "../gps_parser.h"
 
-namespace gps_parser{
+namespace gps_parser {
 
 // This is the structure that will be written into the analyze
 // files.
-struct CustomGPSMsgToWrite{
+struct CustomGPSMsgToWrite {
   float latitude_;
   std::string ew_;
   float longitude_;
@@ -16,28 +15,31 @@ struct CustomGPSMsgToWrite{
 };
 
 class LogAnalyzer {
-  public:
-    std::string file_prefix_ = "parsed_";
+ public:
+  std::string file_prefix_ = "parsed_";
 
-  private:
-    std::string dir_or_file_;
+ private:
+  std::string dir_or_file_;
 
-  public:
-    LogAnalyzer() = default;
-    ~LogAnalyzer() = default;
-    
-  public:
-    // If dir_or_file is directory.  Analyze all the logs in
-    // the direcotry.
-    // If it is a file, only analyze this file.
-    void Analyze(std::string_view dir_or_file);
+ public:
+  LogAnalyzer() = default;
+  ~LogAnalyzer() = default;
 
-  private:
-    // Analyzes a file.  If filename is not a file, then do nothing.
-    void AnalyzeAFile(std::string_view filename);
+ public:
+  // If dir_or_file is directory.  Analyze all the logs in
+  // the direcotry.
+  // If it is a file, only analyze this file.
+  void Analyze(std::string_view dir_or_file);
 
-    // Analyzes all the logs in the directory.
-    void AnalyzeADir(std::string_view dir_name);
+ private:
+  // Analyzes a file.  If filename is not a file, then do nothing.
+  void AnalyzeAFile(std::string_view filename);
+
+  // Analyzes all the logs in the directory.
+  void AnalyzeADir(std::string_view dir_name);
+
+  void WriteMessageToFile(std::string_view raw_message,
+                          std::string_view filename);
 };
 
 }  // namespace gps_parser
