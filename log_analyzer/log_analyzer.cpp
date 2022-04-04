@@ -1,12 +1,15 @@
 #include "log_analyzer.h"
 
 #include <filesystem>
+#include <fstream>
 
-#include "../gps_parser.h"
+#include "../gps_unit.h"
 
 namespace fs = std::filesystem;
 
 namespace gps_parser {
+
+LogAnalyzer::LogAnalyzer() : gps_parser_(std::make_unique<GPSParser>()) {}
 
 void LogAnalyzer::Analyze(std::string_view dir_or_file) {
   if (fs::is_directory(dir_or_file)) {
@@ -31,7 +34,7 @@ void LogAnalyzer::AnalyzeAFile(std::string_view filename) {
 }
 
 std::string LogAnalyzer::GetAnalyzeFileName(std::string_view source_filename) {
-
+  return file_prefix_ + std::string(source_filename);
 }
 
 }  // namespace gps_parser
