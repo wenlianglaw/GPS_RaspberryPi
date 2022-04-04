@@ -1,5 +1,8 @@
+#include <memory>
 #include <string>
 #include <string_view>
+
+#include "../gps_parser.h"
 
 namespace gps_parser {
 
@@ -17,12 +20,13 @@ struct CustomGPSMsgToWrite {
 class LogAnalyzer {
  public:
   std::string file_prefix_ = "parsed_";
+  std::unique_ptr<GPSParser> gps_parser_;
 
  private:
   std::string dir_or_file_;
 
  public:
-  LogAnalyzer() = default;
+  LogAnalyzer();
   ~LogAnalyzer() = default;
 
  public:
