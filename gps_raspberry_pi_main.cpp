@@ -78,7 +78,7 @@ void ParseGPS_Thread() {
         Print(DEBUG, "thread:Parse GPS:", gps_statement);
         bool parsed = parser.Parse(gps_statement, &gps_unit);
         if (parsed) {
-          file_writer.WriteRawMessage(gps_statement);
+          file_writer.WriteRawGpsMessage(gps_statement);
         } else {
           Print(ERROR, "Not parsed ", gps_statement);
         }
