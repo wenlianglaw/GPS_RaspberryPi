@@ -73,7 +73,7 @@ void FileWriter::UpdateRawLogFileName() {
   }
 }
 
-void FileWriter::WriteRawMessage(std::string_view msg) {
+void FileWriter::WriteRawGpsMessage(std::string_view msg) {
   UpdateRawLogFileName();
   if (raw_log_file_.fail()) {
     std::cerr << "Fail to open the raw log file." << std::endl;

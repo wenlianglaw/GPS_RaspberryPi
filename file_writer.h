@@ -1,5 +1,6 @@
 /* This class writes the GPS message.
- * The log filename is based on the message data and time.
+ * This is the only feature it provides: It creates the filename based on the
+ * message data and time.
  */
 
 #ifndef FILE_WR_H_
@@ -13,7 +14,7 @@
 namespace gps_parser {
 
 class FileWriter {
- public:
+public:
   FileWriter();
   ~FileWriter();
 
@@ -27,16 +28,16 @@ class FileWriter {
   std::string GetOutputDir();
 
   // Writes the raw message to the raw log file.
-  void WriteRawMessage(std::string_view msg);
+  void WriteRawGpsMessage(std::string_view msg);
 
- private:
+private:
   std::string output_dir_;
 
   // The raw messages go here.
   std::string raw_log_file_name_;
   std::ofstream raw_log_file_;
 
- private:
+private:
   std::string GetDefaultOutputDir();
   void UpdateRawLogFileName();
 
@@ -51,6 +52,6 @@ class FileWriter {
   std::string GetLogFileSuffix();
 };
 
-}  // namespace gps_parser
+} // namespace gps_parser
 
 #endif
