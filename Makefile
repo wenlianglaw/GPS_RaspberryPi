@@ -33,7 +33,7 @@ log_analyzer:
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	find . -iname *.o -delete
+	find . -iname "*.o" -delete
 
 # Make and run, takes parameter PORT=?0
 run:
