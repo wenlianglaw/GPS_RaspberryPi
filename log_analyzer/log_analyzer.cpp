@@ -62,11 +62,6 @@ public:
     }
   }
 
-  void WriteMessageToFile(std::string_view raw_message,
-                          std::string_view filename) {
-    // TODO
-  }
-
   std::string GetAnalyzeFileName(std::string_view source_filename) {
     return file_prefix_ + std::string(source_filename);
   }

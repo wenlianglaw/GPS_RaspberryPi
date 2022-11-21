@@ -73,13 +73,14 @@ void FileWriter::UpdateRawLogFileName() {
   }
 }
 
-void FileWriter::WriteRawGpsMessage(std::string_view msg) {
+void FileWriter::WriteMessage(std::string_view msg) {
   UpdateRawLogFileName();
   if (raw_log_file_.fail()) {
     std::cerr << "Fail to open the raw log file." << std::endl;
     return;
   }
-  msg.remove_suffix(msg.size() - msg.find_last_of(13));
+  // Removes the CR (Carriage Return) char.
+  msg.remove_suffix(msg.size() - msg.find_last_of('\r'));
   raw_log_file_ << msg << std::endl;
 }
 

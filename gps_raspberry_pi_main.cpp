@@ -25,7 +25,7 @@ using namespace std;
 
 std::mutex g_mutex;
 std::condition_variable g_cv;
-std::vector<string> g_gps_sentence_pool;
+std::vector<std::string> g_gps_sentence_pool;
 
 // Last received stamp
 // Default: 24 hours future.
@@ -78,7 +78,7 @@ void ParseGPS_Thread() {
         Print(DEBUG, "thread:Parse GPS:", gps_statement);
         bool parsed = parser.Parse(gps_statement, &gps_unit);
         if (parsed) {
-          file_writer.WriteRawGpsMessage(gps_statement);
+          file_writer.WriteMessage(gps_statement);
         } else {
           Print(ERROR, "Not parsed ", gps_statement);
         }
