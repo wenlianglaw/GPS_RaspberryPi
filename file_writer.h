@@ -28,7 +28,7 @@ public:
   std::string GetOutputDir();
 
   // Writes the raw message to the raw log file.
-  void WriteRawGpsMessage(std::string_view msg);
+  void WriteMessage(std::string_view msg);
 
 private:
   std::string output_dir_;
