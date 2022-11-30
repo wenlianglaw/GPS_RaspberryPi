@@ -10,4 +10,5 @@ build/*
 gps_raspberry_pi
 util_test
 gps_parser_test
-log_analyzer
+log_analyzer/log_analyzer
+log_analyzer/.*
