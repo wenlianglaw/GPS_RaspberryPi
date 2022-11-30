@@ -5,6 +5,7 @@
 *.o
 log/*
 *.log
+build/*
 
 gps_raspberry_pi
 util_test
