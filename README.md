@@ -13,13 +13,23 @@ Enable uart on Raspberry Pi.
 Connect GPS module to Raspberry Pi using UART-USB cabel.  GPS module RX to USB TX.  GPS TX to USB RX.
 The port is then /dev/ttyUSB0 or /dev/ttyUSB1, depends on which USB you connect.
 
-# Run
+# Build and Run
 
+## Makefile
 ```
 git clone https://github.com/wenlianglaw/GPS_RaspberryPi
 cd GPS_RaspberryPi
 make
 ./gps_raspberry_pi {Your Device Name}
+```
+
+## Cmake
+```
+mkdir build
+cd build
+cmake ../
+cmake --build .
+cmake --build . -target test
 ```
 
 For example:
