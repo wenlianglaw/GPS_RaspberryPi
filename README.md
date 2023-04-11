@@ -8,11 +8,6 @@ Hardwares:
   
 C++ compile -std=c++1z / -std=c++17
 
-# Setting up
-Enable uart on Raspberry Pi.  
-Connect GPS module to Raspberry Pi using UART-USB cabel.  GPS module RX to USB TX.  GPS TX to USB RX.
-The port is then /dev/ttyUSB0 or /dev/ttyUSB1, depends on which USB you connect.
-
 # Build and Run
 
 ## Makefile
@@ -31,6 +26,12 @@ cmake ../
 cmake --build .
 cmake --build . --target test
 ```
+
+# Setting up
+Enable uart on Raspberry Pi.  
+Connect GPS module to Raspberry Pi using UART-USB cabel.  GPS module RX to USB TX.  GPS TX to USB RX.
+The port is then /dev/ttyUSB0 or /dev/ttyUSB1, depends on which USB you connect.
+
 
 For example:
 
