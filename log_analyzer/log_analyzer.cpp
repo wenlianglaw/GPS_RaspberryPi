@@ -36,7 +36,26 @@ public:
   std::unique_ptr<GPSParser> gps_parser_;
   std::string google_api_key_;
 
+  // All the links from these logs.
+  // pair<date time, google map link>
+  std::vector<std::pair<std::string, std::string>> google_map_links_;
+
   void Analyze(std::string_view dir_or_file) {
+    AnalyzeImpl(dir_or_file);
+
+    // Writes the paths into an html file.
+    fs::path dir_name = dir_or_file;
+    if (fs::is_regular_file(dir_or_file)) {
+      dir_name = fs::path(dir_or_file).parent_path();
+    }
+    fs::path html_path = dir_name.append("paths.html");
+
+    std::ofstream html(html_path, std::ofstream::out);
+    html << GenerateHtml(google_map_links_);
+    html.close();
+  }
+
+  void AnalyzeImpl(std::string_view dir_or_file) {
     if (fs::is_directory(dir_or_file)) {
       AnalyzeADir(dir_or_file);
     }
@@ -87,11 +106,13 @@ public:
           out << parsed_gps_msg.str() << std::endl;
           gps_records.push_back(gps_unit);
         }
-      }     
+      }
     } // while get line
 
     // At the end, put a Google map link.
     std::string google_map_link = GenerateGoogleMapLink(gps_records);
+    google_map_links_.push_back(
+        {fs::path(filename).filename().string(), google_map_link});
     out << google_map_link << std::endl;
     out.close();
   } // AnalyzeFile
@@ -101,7 +122,7 @@ public:
 
     std::cout << "Analyze dir: " << dir_name << std::endl;
     for (auto &&dir_entry : fs::directory_iterator{dir_name}) {
-      Analyze(dir_entry.path().string());
+      AnalyzeImpl(dir_entry.path().string());
     }
   }
 
@@ -139,7 +160,7 @@ public:
     const char *size = "800x800";
 
     // TODO: dynamically adjust this value based on the selected data points.
-    const char *zoom_in_lvl = "16";
+    int zoom_lvl = GetZoomLevel(records, 800);
     char link[8192] = {0};
     // When the GPS record location is "too far" from the last location, put it
     // on the Google map.
@@ -159,14 +180,15 @@ public:
     }
 
     if (selected_data_pts > 1) {
-      snprintf(link, sizeof(link), link_format.c_str(), size, zoom_in_lvl,
-               path.c_str(), google_api_key_.c_str());
+      snprintf(link, sizeof(link), link_format.c_str(), size,
+               std::to_string(zoom_lvl).c_str(), path.c_str(),
+               google_api_key_.c_str());
     } else {
       snprintf(link, sizeof(link),
                "https://maps.googleapis.com/maps/api/"
                "staticmap?markers=color:red|%s&zoom=%s&size=%s&key=%s",
-               ConvertToGoogleStylePath(last_location).c_str(), zoom_in_lvl,
-               size, google_api_key_.c_str());
+               ConvertToGoogleStylePath(last_location).c_str(),
+               std::to_string(zoom_lvl).c_str(), size, google_api_key_.c_str());
     }
 
     return std::string(link);
@@ -210,6 +232,72 @@ private:
     }
     return lat_sign + std::to_string(unit.latitude_) + "," + long_sign +
            std::to_string(unit.longitude_);
+  }
+
+  int GetZoomLevel(const std::vector<GPSUnit> &records, int size) {
+    // lvl 16: 1pixel ~ 1m
+    float left = records[0].longitude_;
+    float right = records[0].longitude_;
+    float top = records[0].latitude_;
+    float bot = records[0].latitude_;
+
+    // Doesn't work for cross 0, but we don't care since its not our use case.
+    for (int i = 1; i < records.size(); i++) {
+      const GPSUnit &gps = records[i];
+      if (gps.longitude_ < left) {
+        left = gps.longitude_;
+      }
+      if (gps.longitude_ > right) {
+        right = gps.longitude_;
+      }
+      if (gps.latitude_ < bot) {
+        bot = gps.latitude_;
+      }
+      if (gps.latitude_ > top) {
+        top = gps.latitude_;
+      }
+    }
+
+    GPSUnit b1, b2;
+    b1.longitude_ = left;
+    b1.latitude_ = bot;
+    b2.longitude_ = right;
+    b2.latitude_ = bot;
+    double width = DistanceInMeter(b1, b2);
+
+    b1.longitude_ = left;
+    b1.latitude_ = bot;
+    b2.longitude_ = left;
+    b2.latitude_ = top;
+    double height = DistanceInMeter(b1, b2);
+    double cmp = std::max(width, height);
+
+    // lvl 16: 800 pixel ~ 400m
+    int lvl = 16;
+    // size to meter
+    size /= 2;
+    // Leave some blank margin for the map.
+    cmp *= 2.5;
+    while (lvl > 0) {
+      if (size <= cmp) {
+        size *= 2;
+        lvl--;
+      } else {
+        break;
+      }
+    }
+    return lvl;
+  } // GetZoomLevel
+
+  std::string
+  GenerateHtml(const std::vector<std::pair<std::string, std::string>>
+                   &google_map_links) {
+    std::stringstream ss;
+    for (const auto &[filename, link] : google_map_links) {
+      ss << filename << std::endl;
+      ss << "<img src=\"" << link << "\" >" <<std::endl;
+    }
+    return ss.str();
   }
 };
 
