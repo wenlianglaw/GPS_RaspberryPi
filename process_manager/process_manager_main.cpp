@@ -4,14 +4,14 @@
 // if gps_raspberry_pi is not run, it starts "../gps_raspberry_pi /dev/ttyUSB1"
 #include <chrono>
 #include <iostream>
+#include <sstream>
+#include <string.h>
 #include <thread>
 #include <unistd.h>
 
 #include <wiringPi.h>
 
 namespace chrono = std::chrono;
-
-constexpr const char *const kCmd = "pidof gps_raspberry_pi";
 
 // https://stackoverflow.com/questions/52164723/how-to-execute-a-command-and-get-return-code-stdout-and-stderr-of-command-in-c
 std::string exec(const char *cmd) {
@@ -38,13 +38,23 @@ std::string exec(const char *cmd) {
   return result;
 }
 
-bool IsGpsRunning() {
-  std::string cmd_output = exec(kCmd);
-  return !cmd_output.empty();
+void GetRunningPid(int *a, int *b) {
+  std::string cmd_output = exec("pidof gps_raspberry_pi");
+  std::istringstream ss(cmd_output);
+  if (!ss.eof())
+    ss >> *a;
+  if (!ss.eof())
+    ss >> *b;
+
+  std::cout << "PID: " << *a << " " << *b;
 }
 
-
-void RunGPSMain() { system("/home/pi/programs/GPS_RaspberryPi/gps_raspberry_pi /dev/ttyUSB0"); }
+void RunGPSMain0() {
+  system("/home/pi/programs/GPS_RaspberryPi/gps_raspberry_pi /dev/ttyUSB0");
+}
+void RunGPSMain1() {
+  system("/home/pi/programs/GPS_RaspberryPi/gps_raspberry_pi /dev/ttyUSB1");
+}
 
 // LED GPIO
 constexpr int RED = 14;
@@ -63,16 +73,33 @@ int main() {
   std::thread run_gps_main;
 
   while (true) {
-    bool is_gps_main_running = IsGpsRunning();
-    if (!is_gps_main_running) {
-      run_gps_main = std::thread(RunGPSMain);
+    int pid1 = -1, pid2 = -1;
+    GetRunningPid(&pid1, &pid2);
+    if (pid1 == -1 || pid2 == -1) {
+      for (int pid : {pid1, pid2}) {
+        if (pid == -1)
+          continue;
+        char pstr[16] = {0};
+        sprintf(pstr, "%d", pid);
+        char cmd[64] = "kill -9 ";
+        strcat(cmd, pstr);
+
+        std::cout << cmd << std::endl;
+        int x;
+        std::cin >> x;
+        system(cmd);
+      }
+      run_gps_main = std::thread(RunGPSMain0);
+      run_gps_main.detach();
+
+      run_gps_main = std::thread(RunGPSMain1);
       run_gps_main.detach();
       std::this_thread::sleep_for(2s);
-    }
-
-    std::cout << "Progress is running: " << is_gps_main_running << std::endl;
+    } // If should restart processed
 
     // Turn on light for status
+    bool is_gps_main_running = (pid1 != -1 && pid2 != -1);
+    std::cout << "Progress is running: " << is_gps_main_running << std::endl;
     if (is_gps_main_running) {
       for (int i = 0; i < 2; i++) {
         digitalWrite(GREEN, HIGH);
