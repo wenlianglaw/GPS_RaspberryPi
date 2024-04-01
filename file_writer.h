@@ -13,6 +13,8 @@
 
 namespace gps_parser {
 
+// Stateful file writer class. 
+// Use to append message to files.
 class FileWriter {
 public:
   FileWriter();
