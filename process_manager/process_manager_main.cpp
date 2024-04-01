@@ -1,7 +1,13 @@
-// Make sure there is one gps_raspberry_pi process running.
+// This program ensures that gps_raspberry_pi process is always in running and
+// lightening the LED light to indicate the running status.  If LED light is not
+// on.  You need to restart system to run this program again (required setting
+// cron job)
 //
-// This program checks the processs nameed "gps_raspberry_pi" every few seconds,
-// if gps_raspberry_pi is not run, it starts "../gps_raspberry_pi /dev/ttyUSB1"
+// This program checks to see if there are two processes nameed "gps_raspberry_pi"
+// every few seconds.  If there are less than 2 processes, this program kills the
+// current running process and starts the following processes.
+//   - "/home/pi/programs/GPS_RaspberryPi/gps_raspberry_pi /dev/ttyUSB0"
+//   - "/home/pi/programs/GPS_RaspberryPi/gps_raspberry_pi /dev/ttyUSB1"
 #include <chrono>
 #include <iostream>
 #include <sstream>
