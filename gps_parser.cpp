@@ -41,7 +41,7 @@ GPSParser::GPSParser() : pimpl_(std::make_unique<Impl>()) {}
 GPSParser::~GPSParser() = default;
 
 bool GPSParser::Impl::Parse(const string &gps_msg, GPSUnit *gps_unit) {
-  PRINT(DEBUG, gps_msg);
+  PRINT(INFO, gps_msg);
   auto words = StrSplit(gps_msg, ",");
   bool parsed = false;
 
@@ -58,7 +58,7 @@ bool GPSParser::Impl::Parse(const string &gps_msg, GPSUnit *gps_unit) {
   } else {
     PRINT(ERROR, "-----------------------------");
     PRINT(ERROR, "The GPS sentence cannot be parsed. Skip.");
-    PRINT(ERROR, gps_msg);
+    PRINT(ERROR, gps_msg, " size: ", gps_msg.size());
     PRINT(ERROR, "-----------------------------");
     parsed = false;
   }

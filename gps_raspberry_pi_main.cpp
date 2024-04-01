@@ -146,7 +146,7 @@ void Help() {
 }
 
 int main(int argc, char** argv) {
-  wiringPiSetup();
+  wiringPiSetupGpio();
   Help();
   if (argc < 2) return 1;
   std::string serial_port = argv[1];
