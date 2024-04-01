@@ -29,8 +29,7 @@ public:
   ~LogAnalyzerImpl() {}
 
 public:
-  static constexpr const char *kGoogleApiFilepath =
-      "/home/pi/programs/GPS_RaspberryPi/GOOGLE_MAP_API";
+  static constexpr const char *kGoogleApiFilepath = "../GOOGLE_MAP_API";
   // Two GPS locations that greater than this distance will be considered as
   // "far", and will be marked on the Google Map.
   static constexpr float kXMeterConsideredAsFar = 10.0f;
@@ -56,7 +55,7 @@ public:
     }
 
     if (fs::path(filename).extension() != ".log" ||
-        fs::path(filename).filename().string().find("parsed") == 0) {
+        !StartWith(fs::path(filename).filename().string(), "raw")) {
       return;
     }
 
