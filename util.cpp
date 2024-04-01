@@ -27,7 +27,6 @@ vector<string> StrSplit(const string& str, const string& delim) {
 
 string AscGpsTime(std::tm* tm) {
   char ch[32];
-  std::sprintf(ch, "%d:%d:%d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+  std::sprintf(ch, "%d:%d:%d", tm->tm_hour, tm->tm_min, tm->tm_sec);
   return string(ch);
 }
-

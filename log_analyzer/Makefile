@@ -2,7 +2,7 @@ MAKE=make
 CC=clang++
 FILE=gps_raspberry_pi_main
 OUTPUT=log_analyzer
-LIBS= 
+LIBS+=-lstdc++fs
 CFLAGS=-std=c++17 -Wall
 
 PORT?=0
@@ -20,7 +20,7 @@ main: $(OBJ)
 	$(CC) $(OBJ) -o $(OUTPUT) $(LIBS) $(CFLAGS)
 
 %.o:	%.cpp
-	$(CC) -o $@ -c $< $(CFLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS) $(LIBS)
 
 clean:
 	rm ./*.o

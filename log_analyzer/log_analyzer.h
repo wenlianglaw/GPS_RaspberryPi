@@ -19,8 +19,6 @@ struct CustomGPSMsgToWrite {
 
 /* This Log analyzer takes the raw GPS logs, parse them and write the parsed
  * result to the parsed files.  The parsed file names start with `file_prefix_`.
- *
- * TODO: Generate the MAP API so we see our trajectry from those GPS data.
  */
 class LogAnalyzer {
 public:

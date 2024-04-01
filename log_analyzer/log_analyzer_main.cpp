@@ -1,3 +1,4 @@
+#define DISABLE_DEBUG_MSG
 #include "log_analyzer.h"
 #include <iostream>
 #include <string>
@@ -11,6 +12,7 @@ Usage: log_analyzer raw_logs_dir
 
   std::cout << help_str << std::endl;
 }
+
 
 int main(int argc, char **argv) {
   if (argc != 2) {
