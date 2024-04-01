@@ -91,8 +91,6 @@ int main() {
         strcat(cmd, pstr);
 
         std::cout << cmd << std::endl;
-        int x;
-        std::cin >> x;
         system(cmd);
       }
       run_gps_main = std::thread(RunGPSMain0);
