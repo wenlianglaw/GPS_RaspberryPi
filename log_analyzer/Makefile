@@ -2,7 +2,7 @@ MAKE=make
 CC=clang++
 FILE=gps_raspberry_pi_main
 OUTPUT=log_analyzer
-LIBS+=-lstdc++fs
+LIBS+=#-lstdc++fs
 CFLAGS=-std=c++17 -Wall
 
 PORT?=0
