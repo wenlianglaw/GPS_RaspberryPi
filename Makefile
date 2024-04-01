@@ -1,7 +1,7 @@
 MAKE=make
 CC=clang++
 OUTPUT=gps_raspberry_pi
-LIBS= -lpthread -lwiringPi -lwiringPiDev
+LIBS= -lpthread -lwiringPi -lwiringPiDev -lstdc++fs
 CFLAGS=-std=c++17 -Wall
 
 PORT?=0
