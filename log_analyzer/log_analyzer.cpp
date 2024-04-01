@@ -68,10 +68,11 @@ public:
     // Valid GPS records in this file.
     std::vector<GPSUnit> gps_records;
     while (std::getline(in, line)) {
-      if (line.size() >= 300) {
-        int x;
-        std::cin >> x;
+      int start = line.find("$");
+      if (start == std::string::npos) {
+        continue;
       }
+      line = line.substr(start);
       std::stringstream parsed_gps_msg;
       parsed_gps_msg << std::setprecision(6) << gps_unit.time_ << " "
                      << gps_unit.latitude_ << gps_unit.NS_ << " "
@@ -86,7 +87,7 @@ public:
           out << parsed_gps_msg.str() << std::endl;
           gps_records.push_back(gps_unit);
         }
-      }
+      }     
     } // while get line
 
     // At the end, put a Google map link.
@@ -139,7 +140,7 @@ public:
 
     // TODO: dynamically adjust this value based on the selected data points.
     const char *zoom_in_lvl = "16";
-    char link[4096] = {0};
+    char link[8192] = {0};
     // When the GPS record location is "too far" from the last location, put it
     // on the Google map.
     int selected_data_pts = 1;

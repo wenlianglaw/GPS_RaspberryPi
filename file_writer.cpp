@@ -79,6 +79,12 @@ void FileWriter::WriteMessage(std::string_view msg) {
     std::cerr << "Fail to open the raw log file." << std::endl;
     return;
   }
+  // Removes prefix until reaches $
+  int i= msg.find("$");
+  if (i==-1) {
+    return;
+  }
+  msg = msg.substr(i);
   // Removes the CR (Carriage Return) char.
   msg.remove_suffix(msg.size() - msg.find_last_of('\r'));
   raw_log_file_ << msg << std::endl;
