@@ -13,3 +13,4 @@ gps_parser_test
 log_analyzer/log_analyzer
 log_analyzer/.*
 GOOGLE_MAP_API
+process_manager/process_manager
