@@ -155,11 +155,7 @@ public:
       return "No GPS records.";
     }
 
-    const std::string link_format = "https://maps.googleapis.com/maps/api/"
-                                    "staticmap?size=%s&zoom=%s&path=%s&key=%s";
     const char *size = "800x800";
-
-    // TODO: dynamically adjust this value based on the selected data points.
     int zoom_lvl = GetZoomLevel(records, 800);
     char link[8192] = {0};
     // When the GPS record location is "too far" from the last location, put it
@@ -180,10 +176,14 @@ public:
     }
 
     if (selected_data_pts > 1) {
-      snprintf(link, sizeof(link), link_format.c_str(), size,
-               std::to_string(zoom_lvl).c_str(), path.c_str(),
+      snprintf(link, sizeof(link),
+               "https://maps.googleapis.com/maps/api/"
+               "staticmap?size=%s&zoom=%s&path=%s&key=%s",
+               size, std::to_string(zoom_lvl).c_str(), path.c_str(),
                google_api_key_.c_str());
     } else {
+      // If there is only one data point, place a map Marker instead of showing
+      // paths.
       snprintf(link, sizeof(link),
                "https://maps.googleapis.com/maps/api/"
                "staticmap?markers=color:red|%s&zoom=%s&size=%s&key=%s",
@@ -235,7 +235,6 @@ private:
   }
 
   int GetZoomLevel(const std::vector<GPSUnit> &records, int size) {
-    // lvl 16: 1pixel ~ 1m
     float left = records[0].longitude_;
     float right = records[0].longitude_;
     float top = records[0].latitude_;
@@ -295,7 +294,7 @@ private:
     std::stringstream ss;
     for (const auto &[filename, link] : google_map_links) {
       ss << filename << std::endl;
-      ss << "<img src=\"" << link << "\" >" <<std::endl;
+      ss << "<img src=\"" << link << "\" >" << std::endl;
     }
     return ss.str();
   }

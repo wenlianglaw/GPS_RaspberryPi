@@ -600,8 +600,11 @@ void GPSParser::Impl::ParseLatAndLong(const string &lat, const string &longi,
                                       GPSUnit *gps_unit) {
   string latitude = lat, longitude = longi;
   if (longitude.size() && latitude.size()) {
-    string google_map_url = "www.google.com/maps/place/";
     auto dot_pos = latitude.find('.');
+    if (dot_pos == std::string::npos || dot_pos < 2) {
+      PRINT(ERROR, "Lat mal formatted and cannot be parsed", latitude);
+      return;
+    }
     latitude.insert(dot_pos - 2, ".");
     latitude.erase(dot_pos + 1, 1);
     auto words = StrSplit(latitude, ".");
@@ -609,22 +612,31 @@ void GPSParser::Impl::ParseLatAndLong(const string &lat, const string &longi,
     // TODO Deal with carry over
     if (!words[1].empty()) {
       words[1] = std::to_string((int)(stoi(words[1]) * GPS_MODULE_FIX));
+    } else {
+      words[1] = "0";
     }
     latitude = words[0] + "." + words[1];
     gps_unit->latitude_ = stof(latitude);
     gps_unit->NS_ = NS;
 
     dot_pos = longitude.find('.');
+    if (dot_pos == std::string::npos || dot_pos < 2) {
+      PRINT(ERROR, "Longitutde mal formatted and cannot be parsed", longitude);
+      return;
+    }
     longitude.insert(dot_pos - 2, ".");
     longitude.erase(dot_pos + 1, 1);
     words = StrSplit(longitude, ".");
     if (!words[1].empty()) {
       words[1] = std::to_string((int)(stoi(words[1]) * GPS_MODULE_FIX));
+    } else {
+      words[1] = "0";
     }
     longitude = words[0] + "." + words[1];
     gps_unit->longitude_ = stof(longitude);
     gps_unit->EW_ = EW;
 
+    string google_map_url = "www.google.com/maps/place/";
     google_map_url += latitude + NS + "+" + longitude + EW;
     gps_unit->google_map_url_ = google_map_url;
     PRINT(DEBUG, google_map_url);
