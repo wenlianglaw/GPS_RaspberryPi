@@ -154,7 +154,7 @@ public:
     if (records.empty()) {
       return "No GPS records.";
     }
-    
+
     const char *size = "800x800";
     int zoom_lvl = GetZoomLevel(records, 800);
     char link[8192] = {0};
@@ -176,12 +176,14 @@ public:
     }
 
     if (selected_data_pts > 1) {
-      snprintf(link, sizeof(link), "https://maps.googleapis.com/maps/api/"
-                                    "staticmap?size=%s&zoom=%s&path=%s&key=%s", size,
-               std::to_string(zoom_lvl).c_str(), path.c_str(),
+      snprintf(link, sizeof(link),
+               "https://maps.googleapis.com/maps/api/"
+               "staticmap?size=%s&zoom=%s&path=%s&key=%s",
+               size, std::to_string(zoom_lvl).c_str(), path.c_str(),
                google_api_key_.c_str());
     } else {
-      // If there is only one data point, place a map Marker instead of showing paths.
+      // If there is only one data point, place a map Marker instead of showing
+      // paths.
       snprintf(link, sizeof(link),
                "https://maps.googleapis.com/maps/api/"
                "staticmap?markers=color:red|%s&zoom=%s&size=%s&key=%s",
@@ -292,7 +294,7 @@ private:
     std::stringstream ss;
     for (const auto &[filename, link] : google_map_links) {
       ss << filename << std::endl;
-      ss << "<img src=\"" << link << "\" >" <<std::endl;
+      ss << "<img src=\"" << link << "\" >" << std::endl;
     }
     return ss.str();
   }
