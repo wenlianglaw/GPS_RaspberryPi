@@ -103,17 +103,17 @@ int main() {
     if (is_gps_main_running) {
       for (int i = 0; i < 2; i++) {
         digitalWrite(GREEN, HIGH);
-        std::this_thread::sleep_for(.1s);
+        std::this_thread::sleep_for(50ms);
         digitalWrite(GREEN, LOW);
-        std::this_thread::sleep_for(.2s);
+        std::this_thread::sleep_for(50ms);
       }
       digitalWrite(GREEN, LOW);
     } else {
       for (int i = 0; i < 2; i++) {
         digitalWrite(RED, HIGH);
-        std::this_thread::sleep_for(.1s);
+        std::this_thread::sleep_for(50ms);
         digitalWrite(RED, LOW);
-        std::this_thread::sleep_for(.1s);
+        std::this_thread::sleep_for(50ms);
       }
       digitalWrite(RED, LOW);
     }
