@@ -5,6 +5,7 @@
 *.o
 log/*
 *.log
+*.html
 build/*
 
 gps_raspberry_pi
