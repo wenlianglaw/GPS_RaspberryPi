@@ -586,7 +586,7 @@ void GPSParser::Impl::ParseGpsTime(const string &time, GPSUnit *gps_unit) {
   strptime(gps_time.c_str(), "%H%M%S", &parsed_tm);
 
   struct tm ca_time = parsed_tm;
-  const int local_time_diff = -8;
+  const int local_time_diff = -7;
 
   ca_time.tm_hour = (ca_time.tm_hour + 24 + local_time_diff) % 24;
   gps_unit->time_ = AscGpsTime(&ca_time);
@@ -616,7 +616,7 @@ void GPSParser::Impl::ParseLatAndLong(const string &lat, const string &longi,
       words[1] = "0";
     }
     latitude = words[0] + "." + words[1];
-    gps_unit->latitude_ = stof(latitude);
+    gps_unit->latitude_ = stod(latitude);
     gps_unit->NS_ = NS;
 
     dot_pos = longitude.find('.');
@@ -633,7 +633,7 @@ void GPSParser::Impl::ParseLatAndLong(const string &lat, const string &longi,
       words[1] = "0";
     }
     longitude = words[0] + "." + words[1];
-    gps_unit->longitude_ = stof(longitude);
+    gps_unit->longitude_ = stod(longitude);
     gps_unit->EW_ = EW;
 
     string google_map_url = "www.google.com/maps/place/";

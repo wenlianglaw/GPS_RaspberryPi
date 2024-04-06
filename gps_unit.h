@@ -9,9 +9,9 @@ namespace gps_parser {
 class GPSUnit {
 public:
   /* GPGGA */
-  float latitude_ = 0.0f;
+  double latitude_ = 0.0f;
   string NS_ = "N";
-  float longitude_ = 0.0f;
+  double longitude_ = 0.0f;
   string EW_ = "E";
   string google_map_url_;
   // 225446 Time of fix 22:54:46 UTC
