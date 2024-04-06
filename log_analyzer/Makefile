@@ -1,7 +1,7 @@
 MAKE=make
 CC=clang++
 OUTPUT=log_analyzer
-LIBS+=#-lstdc++fs
+LIBS+=-lstdc++fs
 CFLAGS=-std=c++17 -Wall
 IDIR=../erkir/include
 

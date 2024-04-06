@@ -30,10 +30,13 @@ public:
   ~LogAnalyzerImpl() { cout << "exiting..." << endl; }
 
 public:
-  static constexpr const char *kGoogleApiFilepath = "../GOOGLE_MAP_API";
+  static constexpr const char *kGoogleApiFilepath =
+      "/home/pi/programs/GPS_RaspberryPi/GOOGLE_MAP_API";
   // Two GPS locations that greater than this distance will be considered as
   // "far", and will be marked on the Google Map.
   static constexpr float kXMeterConsideredAsFar = 50.0f;
+  static constexpr int kMaximumPathsInOneLink = 200;
+
   std::unique_ptr<GPSParser> gps_parser_;
   std::string google_api_key_;
 
@@ -146,7 +149,14 @@ public:
     return fullpath.string();
   }
 
-  void ReadGoogleApiKeyFromFile(std::string google_api_key_filename) {
+  // Returns should records[i] be filtered out.
+  // More advancded filter algorithm could be applied here.
+  bool ShouldFilterDataPoints(const std::vector<GPSUnit> &records,
+                                     int i) {
+    return (records[i].latitude_ == 0.0f || records[i].longitude_ == 0.0f);
+  }
+
+  void ReadGoogleApiKeyFromFile(const std::string &google_api_key_filename) {
     std::ifstream in(std::string(google_api_key_filename), std::istream::in);
     std::string line;
     while (std::getline(in, line)) {
@@ -170,42 +180,51 @@ public:
 
     const char *size = "800x800";
     int zoom_lvl = GetZoomLevel(records, 800);
-    char link[8192] = {0};
-    // When the GPS record location is "too far" from the last location, put it
-    // on the Google map.
-    int selected_data_pts = 1;
-    std::string path = "color:0xff0000ff|weight:2";
-    // TODO finish this.
-    GPSUnit last_location = records[0];
-    {
+
+    int record_i = 0;
+    while (record_i < records.size()) {
+      if (ShouldFilterDataPoints(records, record_i)) {
+        record_i++;
+        continue;
+      }
+
+      char link[8192] = {0};
+      // When the GPS record location is "too far" from the last location, put
+      // it on the Google map.
+      int selected_data_pts = 1;
+      std::string path = "color:0xff0000ff|weight:2";
+      GPSUnit last_location = records[record_i++];
       path += "|" + ConvertToGoogleStylePath(last_location);
-      for (int i = 1; i < records.size(); i++) {
-        if (DistanceInMeter(records[i], last_location) >=
+      for (; record_i < records.size() &&
+             selected_data_pts < kMaximumPathsInOneLink;
+           record_i++) {
+        if (DistanceInMeter(records[record_i], last_location) >=
             kXMeterConsideredAsFar) {
-          last_location = records[i];
+          last_location = records[record_i];
           path += "|" + ConvertToGoogleStylePath(last_location);
           selected_data_pts++;
         }
       }
-    }
 
-    if (selected_data_pts > 1) {
-      snprintf(link, sizeof(link),
-               "https://maps.googleapis.com/maps/api/"
-               "staticmap?size=%s&zoom=%s&path=%s&key=%s",
-               size, std::to_string(zoom_lvl).c_str(), path.c_str(),
-               google_api_key_.c_str());
-    } else {
-      // If there is only one data point, place a map Marker instead of showing
-      // paths.
-      snprintf(link, sizeof(link),
-               "https://maps.googleapis.com/maps/api/"
-               "staticmap?markers=color:red|%s&zoom=%s&size=%s&key=%s",
-               ConvertToGoogleStylePath(last_location).c_str(),
-               std::to_string(zoom_lvl).c_str(), size, google_api_key_.c_str());
-    }
-
-    links.emplace_back(link);
+      if (selected_data_pts > 1) {
+        snprintf(link, sizeof(link),
+                 "https://maps.googleapis.com/maps/api/"
+                 "staticmap?size=%s&zoom=%s&path=%s&key=%s",
+                 size, std::to_string(zoom_lvl).c_str(), path.c_str(),
+                 google_api_key_.c_str());
+      } else {
+        // If there is only one data point, place a map Marker instead of
+        // showing paths.
+        snprintf(link, sizeof(link),
+                 "https://maps.googleapis.com/maps/api/"
+                 "staticmap?markers=color:red|%s&zoom=%s&size=%s&key=%s",
+                 ConvertToGoogleStylePath(last_location).c_str(),
+                 std::to_string(zoom_lvl).c_str(), size,
+                 google_api_key_.c_str());
+      }
+      links.emplace_back(link);
+    } // while
+    std::cout << links.size() << endl;
     return links;
   }
 
