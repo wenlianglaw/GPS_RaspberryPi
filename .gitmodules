@@ -1,0 +1,3 @@
+[submodule "erkir"]
+	path = erkir
+	url = https://github.com/vahancho/erkir
