@@ -1,6 +1,5 @@
 #include <memory>
 #include <string>
-#include <string_view>
 
 #include "../gps_parser.h"
 
@@ -29,7 +28,7 @@ public:
   // If dir_or_file is directory.  Analyze all the logs in
   // the direcotry.
   // If it is a file, only analyze this file.
-  void Analyze(std::string_view dir_or_file);
+  void Analyze(const std::string& dir_or_file);
 
 private:
   class LogAnalyzerImpl;

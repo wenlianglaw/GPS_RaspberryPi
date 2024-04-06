@@ -15,6 +15,7 @@
 #include "../gps_unit.h"
 #include "../util.h"
 
+#include "../erkir/include/sphericalpoint.h"
 #include "../gps_parser.h"
 
 namespace fs = std::filesystem;
@@ -26,13 +27,13 @@ public:
   LogAnalyzerImpl() : gps_parser_(std::make_unique<GPSParser>()) {
     ReadGoogleApiKeyFromFile(kGoogleApiFilepath);
   }
-  ~LogAnalyzerImpl() {}
+  ~LogAnalyzerImpl() { cout << "exiting..." << endl; }
 
 public:
   static constexpr const char *kGoogleApiFilepath = "../GOOGLE_MAP_API";
   // Two GPS locations that greater than this distance will be considered as
   // "far", and will be marked on the Google Map.
-  static constexpr float kXMeterConsideredAsFar = 10.0f;
+  static constexpr float kXMeterConsideredAsFar = 50.0f;
   std::unique_ptr<GPSParser> gps_parser_;
   std::string google_api_key_;
 
@@ -40,7 +41,7 @@ public:
   // pair<date time, google map link>
   std::vector<std::pair<std::string, std::string>> google_map_links_;
 
-  void Analyze(std::string_view dir_or_file) {
+  void Analyze(const std::string &dir_or_file) {
     AnalyzeImpl(dir_or_file);
 
     // Writes the paths into an html file.
@@ -52,13 +53,14 @@ public:
 
     std::ofstream html(html_path, std::ofstream::out);
     html << GenerateHtml(google_map_links_);
+    google_map_links_.clear();
     html.close();
 
     std::cout << "html is written to " << html_path << std::endl;
     std::cout << "Analyze finished." << std::endl;
   }
 
-  void AnalyzeImpl(std::string_view dir_or_file) {
+  void AnalyzeImpl(const std::string &dir_or_file) {
     if (fs::is_directory(dir_or_file)) {
       AnalyzeADir(dir_or_file);
     }
@@ -69,7 +71,7 @@ public:
   }
 
   // Analyzes a file.  If filename is not a file, then do nothing.
-  void AnalyzeFile(std::string_view filename) {
+  void AnalyzeFile(const std::string &filename) {
 
     // Only analyze the normal file.
     if (!fs::is_regular_file(filename)) {
@@ -113,15 +115,20 @@ public:
     } // while get line
 
     // At the end, put a Google map link.
-    std::string google_map_link = GenerateGoogleMapLink(gps_records);
-    google_map_links_.push_back(
-        {fs::path(filename).filename().string(), google_map_link});
-    out << google_map_link << std::endl;
+    cout << gps_records.size() << endl;
+    std::vector<std::string> google_map_links =
+        GenerateGoogleMapLink(gps_records);
+    for (int i = 0; i < google_map_links.size(); i++) {
+      google_map_links_.push_back(
+          {fs::path(filename).filename().string() + "_" + std::to_string(i),
+           google_map_links[i]});
+      out << google_map_links[i] << std::endl;
+    }
     out.close();
   } // AnalyzeFile
 
   // Analyzes all the logs in the directory.
-  void AnalyzeADir(std::string_view dir_name) {
+  void AnalyzeADir(const std::string &dir_name) {
 
     std::cout << "Analyze dir: " << dir_name << std::endl;
     for (auto &&dir_entry : fs::directory_iterator{dir_name}) {
@@ -139,7 +146,7 @@ public:
     return fullpath.string();
   }
 
-  void ReadGoogleApiKeyFromFile(std::string_view google_api_key_filename) {
+  void ReadGoogleApiKeyFromFile(std::string google_api_key_filename) {
     std::ifstream in(std::string(google_api_key_filename), std::istream::in);
     std::string line;
     while (std::getline(in, line)) {
@@ -153,10 +160,13 @@ public:
   }
 
   // Generate a static map link from for a list of GPS records.
-  std::string GenerateGoogleMapLink(const std::vector<GPSUnit> &records) {
+  std::vector<std::string>
+  GenerateGoogleMapLink(const std::vector<GPSUnit> &records) {
     if (records.empty()) {
-      return "No GPS records.";
+      return {"No GPS records."};
     }
+
+    std::vector<std::string> links;
 
     const char *size = "800x800";
     int zoom_lvl = GetZoomLevel(records, 800);
@@ -165,6 +175,7 @@ public:
     // on the Google map.
     int selected_data_pts = 1;
     std::string path = "color:0xff0000ff|weight:2";
+    // TODO finish this.
     GPSUnit last_location = records[0];
     {
       path += "|" + ConvertToGoogleStylePath(last_location);
@@ -194,32 +205,20 @@ public:
                std::to_string(zoom_lvl).c_str(), size, google_api_key_.c_str());
     }
 
-    return std::string(link);
+    links.emplace_back(link);
+    return links;
   }
 
 private:
-  // Formula: https://www.movable-type.co.uk/scripts/latlong.html
+  // https://github.com/vahancho/erkir
   double DistanceInMeter(const GPSUnit &loc_a, const GPSUnit &loc_b) {
     double lat1 = loc_a.latitude_;
-    double lat2 = loc_b.latitude_;
     double long1 = loc_a.longitude_;
+    double lat2 = loc_b.latitude_;
     double long2 = loc_b.longitude_;
-
-    // Earth radius ~6371km
-    const double r = 6371e3;
-    double phi1 = lat1 * M_PI / 180.0f;
-    double phi2 = lat2 * M_PI / 180.0f;
-    double delta_phi = (lat2 - lat1) * M_PI / 180;
-    double delta_lambda = (long2 - long1) * M_PI / 180;
-
-    double a = std::sin(delta_phi / 2) * std::sin(delta_lambda / 2) +
-               std::cos(phi1) * std::cos(phi2) * std::sin(delta_lambda / 2) *
-                   std::sin(delta_lambda / 2);
-    double c = 2 * std::atan2(std::sqrt(a), std::sqrt(1.0 - a));
-    double d = r * c;
-
-    PRINT(INFO, "Distance is ", d);
-
+    erkir::spherical::Point p1{lat1, -long1};
+    erkir::spherical::Point p2{lat2, -long2};
+    double d = p1.distanceTo(p2);
     return d;
   }
 
@@ -238,10 +237,12 @@ private:
   }
 
   int GetZoomLevel(const std::vector<GPSUnit> &records, int size) {
-    float left = records[0].longitude_;
-    float right = records[0].longitude_;
-    float top = records[0].latitude_;
-    float bot = records[0].latitude_;
+    if (records.empty())
+      return 16;
+    double left = records[0].longitude_;
+    double right = records[0].longitude_;
+    double top = records[0].latitude_;
+    double bot = records[0].latitude_;
 
     // Doesn't work for cross 0, but we don't care since its not our use case.
     for (int i = 1; i < records.size(); i++) {
@@ -306,7 +307,7 @@ private:
 LogAnalyzer::LogAnalyzer() : pimpl_(std::make_unique<LogAnalyzerImpl>()) {}
 LogAnalyzer::~LogAnalyzer() {}
 
-void LogAnalyzer::Analyze(std::string_view dir_or_file) {
+void LogAnalyzer::Analyze(const std::string &dir_or_file) {
   pimpl_->Analyze(dir_or_file);
 }
 
