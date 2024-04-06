@@ -53,6 +53,9 @@ public:
     std::ofstream html(html_path, std::ofstream::out);
     html << GenerateHtml(google_map_links_);
     html.close();
+
+    std::cout << "html is written to " << html_path << std::endl;
+    std::cout << "Analyze finished." << std::endl;
   }
 
   void AnalyzeImpl(std::string_view dir_or_file) {
